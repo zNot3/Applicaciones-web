@@ -21,7 +21,8 @@ class MainActivity : ComponentActivity() {
             Lab1Theme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Greeting(
-                        name = "Android",
+                        name = "Mario Blanco",
+                        carnet = "24002578",
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
@@ -33,7 +34,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun Greeting(name: String, carnet: String, modifier: Modifier = Modifier) {
     Text(
-        text = "Hello $name!",
+        text = "Hola $name - $carnet",
         modifier = modifier
     )
 }
@@ -42,6 +43,6 @@ fun Greeting(name: String, carnet: String, modifier: Modifier = Modifier) {
 @Composable
 fun GreetingPreview() {
     Lab1Theme {
-        Greeting("Mario Blanco")
+        Greeting("Mario Blanco", "24002578")
     }
 }
