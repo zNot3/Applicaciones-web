@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+==============================================================================
+IC_LAUNCHER_FOREGROUND.XML - Capa Frontal del Ícono Adaptativo
+==============================================================================
+Los íconos adaptativos (Adaptive Icons) de Android tienen dos capas:
+  1. Foreground (esta): El ícono/símbolo principal
+  2. Background: El fondo (puede ser un color sólido o imagen)
+
+El sistema puede recortar estas capas en diferentes formas (círculo, cuadrado
+redondeado, etc.) según el launcher del dispositivo.
+
+Este archivo define un dado D20 estilizado usando Vector Drawable.
+==============================================================================
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Fondo del ícono (hexágono que representa el D20) -->
+    <path
+        android:fillColor="#6200EE"
+        android:pathData="M54,20 L84,35 L84,73 L54,88 L24,73 L24,35 Z" />
+
+    <!-- Borde del hexágono -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:fillColor="#00000000"
+        android:pathData="M54,20 L84,35 L84,73 L54,88 L24,73 L24,35 Z" />
+
+    <!-- Número "20" en el centro -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M42,48 L42,58 Q42,62 46,62 L50,62 Q54,62 54,58 L54,52 Q54,48 50,48 L46,48 Q42,48 42,52 L42,58 M46,52 L50,52 L50,58 L46,58 Z" />
+
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M58,48 Q58,44 62,44 L66,44 Q70,44 70,48 L70,58 Q70,62 66,62 L62,62 Q58,62 58,58 Z M62,48 L62,58 L66,58 L66,48 Z" />
+
+</vector>

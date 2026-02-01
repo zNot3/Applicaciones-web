@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+==============================================================================
+STRINGS.XML - Recursos de Texto
+==============================================================================
+Este archivo centraliza TODOS los textos de la aplicación.
+
+¿POR QUÉ USAR STRINGS.XML?
+
+1. INTERNACIONALIZACIÓN (i18n): Puedes crear versiones para otros idiomas
+   (values-es/strings.xml, values-fr/strings.xml, etc.)
+2. MANTENIBILIDAD: Cambiar un texto en un solo lugar lo actualiza en toda la app
+3. BUENAS PRÁCTICAS: Android Studio te advierte si hardcodeas strings
+==============================================================================
+-->
+<resources>
+    <!-- Nombre de la aplicación mostrado en el launcher y barra de título -->
+    <string name="app_name">RPG Dice Roller</string>
+</resources>

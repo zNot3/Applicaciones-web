@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+==============================================================================
+ANDROIDMANIFEST.XML - Manifiesto de la Aplicación Android
+==============================================================================
+Este archivo es OBLIGATORIO en toda aplicación Android. Es el "contrato"
+entre tu app y el sistema operativo Android. Define:
+  1. Componentes de la app (Activities, Services, Receivers, Providers)
+  2. Permisos que la app necesita (INTERNET, CAMERA, etc.)
+  3. Requisitos de hardware/software (pantalla, sensores, etc.)
+  4. Metadatos de la aplicación (icono, tema, nombre)
+
+IMPORTANTE: El atributo 'package' ya NO se define aquí en proyectos modernos.
+Ahora se define como 'namespace' en app/build.gradle.kts
+==============================================================================
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <!--
+    NOTA: No hay atributo 'package' aquí porque usamos el namespace
+    definido en build.gradle.kts: "com.curso.android.module1.dice"
+    -->
+
+    <!--
+    ============================================================================
+    BLOQUE <application>
+    ============================================================================
+    Contiene la configuración global de la aplicación y declara todos sus
+    componentes (Activities, Services, etc.)
+
+    Atributos importantes:
+      - android:allowBackup: Permite backup automático a Google Drive
+      - android:icon: Icono de la app (launcher icon)
+      - android:roundIcon: Icono redondeado (para launchers que lo soporten)
+      - android:label: Nombre de la app visible al usuario
+      - android:supportsRtl: Soporte para idiomas Right-to-Left (árabe, hebreo)
+      - android:theme: Tema visual por defecto de la app
+    ============================================================================
+    -->
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.RPGDiceRollerApp"
+        tools:targetApi="35">
+        <!--
+        tools:targetApi="35": Suprime warnings del IDE sobre APIs nuevas.
+        Esto NO cambia el comportamiento en runtime.
+        -->
+
+        <!--
+        ========================================================================
+        DECLARACIÓN DE ACTIVITY
+        ========================================================================
+        Cada Activity de la app debe declararse aquí.
+
+        MainActivity es nuestra ÚNICA Activity (pantalla).
+
+        Atributos:
+          - android:name: Clase de la Activity (relativa al namespace)
+          - android:exported: Si puede ser iniciada por otras apps
+          - android:theme: Tema específico para esta Activity
+        ========================================================================
+        -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:theme="@style/Theme.RPGDiceRollerApp">
+            <!--
+            android:exported="true" es OBLIGATORIO para la Activity principal
+            desde Android 12 (API 31). Indica que otras apps (como el Launcher)
+            pueden iniciar esta Activity.
+            -->
+
+            <!--
+            ====================================================================
+            INTENT FILTERS
+            ====================================================================
+            Define qué tipos de "Intents" esta Activity puede manejar.
+
+            Para ser la Activity principal (la que se abre al tocar el icono),
+            necesitamos:
+              - action.MAIN: Es el punto de entrada principal
+              - category.LAUNCHER: Debe aparecer en el app launcher
+            ====================================================================
+            -->
+            <intent-filter>
+                <!-- Acción MAIN: Esta es la Activity principal de la app -->
+                <action android:name="android.intent.action.MAIN" />
+
+                <!-- Categoría LAUNCHER: Mostrar icono en el launcher del dispositivo -->
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>
+
+<!--
+==============================================================================
+NOTAS EDUCATIVAS ADICIONALES:
+==============================================================================
+
+¿QUÉ ES UN INTENT?
+Un Intent es un objeto de mensajería que describe una operación a realizar.
+Puede ser:
+  - Explícito: Especifica exactamente qué componente ejecutar
+      Intent(this, OtraActivity::class.java)
+  - Implícito: Describe la acción deseada y el sistema encuentra quién puede hacerla
+      Intent(Intent.ACTION_VIEW, Uri.parse("https://google.com"))
+
+¿QUÉ ES UN INTENT FILTER?
+Un intent-filter declara qué tipos de Intents implícitos puede manejar
+un componente. El sistema lo usa para "matchear" intents con componentes.
+
+¿POR QUÉ android:exported="true"?
+Desde Android 12, DEBES declarar explícitamente si un componente con
+intent-filters puede ser accedido por otras apps:
+  - true: Otras apps pueden iniciarlo (necesario para el launcher)
+  - false: Solo tu app puede iniciarlo
+
+COMPONENTES DE ANDROID:
+  1. Activity: Pantalla con UI (lo que estamos usando)
+  2. Service: Trabajo en segundo plano sin UI
+  3. BroadcastReceiver: Responde a eventos del sistema
+  4. ContentProvider: Comparte datos con otras apps
+
+En este proyecto simple, solo usamos Activity.
+
+==============================================================================
+-->

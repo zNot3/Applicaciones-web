@@ -1,0 +1,177 @@
+# =============================================================================
+# VERSION CATALOG (libs.versions.toml)
+# =============================================================================
+# Este archivo centraliza TODAS las versiones de dependencias del proyecto.
+# Es una característica de Gradle que permite:
+#   1. Definir versiones en un solo lugar (fácil mantenimiento)
+#   2. Compartir dependencias entre módulos de forma consistente
+#   3. Autocompletado en el IDE al escribir "libs.xxx"
+#
+# Estructura del archivo:
+#   [versions]  -> Define las versiones como variables reutilizables
+#   [libraries] -> Define las dependencias usando las versiones
+#   [plugins]   -> Define los plugins de Gradle
+#   [bundles]   -> Agrupa dependencias relacionadas (opcional)
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# SECCIÓN DE VERSIONES
+# -----------------------------------------------------------------------------
+# Aquí definimos todas las versiones como "variables" que luego se referencian
+# en las secciones de [libraries] y [plugins] usando la sintaxis:
+#   version.ref = "nombre-de-la-version"
+# -----------------------------------------------------------------------------
+[versions]
+
+# --- Android Gradle Plugin (AGP) ---
+# El plugin que permite a Gradle compilar proyectos Android.
+# Debe ser compatible con la versión de Gradle Wrapper.
+# AGP 8.10.0 requiere Gradle 8.11+ y JDK 17+
+agp = "8.13.1"
+
+# --- Kotlin ---
+# Versión del compilador y runtime de Kotlin.
+# Debe ser compatible con el Compose Compiler.
+kotlin = "2.1.20"
+
+# --- Android SDK Versions ---
+# compileSdk: SDK contra el que se compila (permite usar APIs nuevas)
+# minSdk: Versión mínima de Android soportada (API 24 = Android 7.0)
+# targetSdk: SDK objetivo para el que se optimiza la app
+compileSdk = "35"
+minSdk = "24"
+targetSdk = "35"
+
+# --- AndroidX Core ---
+# Biblioteca core de AndroidX con extensiones de Kotlin (KTX)
+# Proporciona funciones de extensión para APIs de Android.
+coreKtx = "1.15.0"
+
+# --- Activity Compose ---
+# Integración entre ComponentActivity y Jetpack Compose.
+# Proporciona setContent{} y otras utilidades.
+activityCompose = "1.9.3"
+
+# --- Lifecycle Runtime ---
+# Componentes de ciclo de vida con soporte para Kotlin.
+# Necesario para lifecycleScope y otras funciones.
+lifecycleRuntimeKtx = "2.8.7"
+
+# --- Jetpack Compose BOM (Bill of Materials) ---
+# El BOM es un archivo especial que define versiones compatibles
+# de TODAS las bibliotecas de Compose. Al usar el BOM, no necesitas
+# especificar la versión de cada biblioteca Compose individualmente.
+# Esto garantiza que todas las bibliotecas Compose sean compatibles entre sí.
+composeBom = "2025.05.01"
+
+# -----------------------------------------------------------------------------
+# SECCIÓN DE BIBLIOTECAS (DEPENDENCIAS)
+# -----------------------------------------------------------------------------
+# Cada biblioteca se define con:
+#   module = "group:artifact"  -> Coordenadas Maven de la dependencia
+#   version.ref = "xxx"        -> Referencia a una versión definida arriba
+#
+# Para bibliotecas del BOM:
+#   group = "xxx"
+#   name = "yyy"
+#   (sin versión, porque el BOM la proporciona)
+# -----------------------------------------------------------------------------
+[libraries]
+
+# --- Core KTX ---
+# Extensiones de Kotlin para APIs de Android (SharedPreferences, Bundle, etc.)
+androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
+
+# --- Lifecycle Runtime KTX ---
+# Proporciona lifecycleScope para lanzar corrutinas vinculadas al ciclo de vida.
+androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
+
+# --- Activity Compose ---
+# Integración de Activity con Compose. Proporciona:
+#   - setContent { } para establecer contenido Compose
+#   - enableEdgeToEdge() para UI de borde a borde
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
+
+# --- Compose BOM (Bill of Materials) ---
+# Este BOM controla las versiones de todas las bibliotecas Compose.
+# IMPORTANTE: Se usa con platform() en build.gradle.kts
+androidx-compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }
+
+# --- Compose UI ---
+# Core de Jetpack Compose para construir interfaces de usuario.
+# No especificamos versión porque el BOM la proporciona.
+androidx-compose-ui = { group = "androidx.compose.ui", name = "ui" }
+
+# --- Compose UI Graphics ---
+# Utilidades gráficas para Compose (Canvas, colores, etc.)
+androidx-compose-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
+
+# --- Compose UI Tooling Preview ---
+# Soporte para @Preview en Android Studio.
+# Permite ver previews de Composables sin ejecutar la app.
+androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
+
+# --- Compose UI Tooling ---
+# Herramientas de desarrollo para Compose (inspector, etc.)
+# Solo se incluye en builds de debug.
+androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
+
+# --- Material 3 ---
+# Implementación de Material Design 3 para Compose.
+# Incluye componentes como Button, Text, Card, etc.
+androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
+
+# --- Material Icons Core ---
+# Colección CORE de Material Icons para Compose.
+# Incluye los íconos más comunes como Refresh, Star, Add, etc.
+#
+# NOTA EDUCATIVA: Diferencia entre material-icons-core y material-icons-extended
+# ===============================================================================
+# - material-icons-core (~2MB): Contiene los íconos más usados (Refresh, Add, Menu, etc.)
+# - material-icons-extended (~36MB): Contiene TODOS los íconos de Material Design (2000+)
+#
+# Recomendación:
+#   - Usa material-icons-core si solo necesitas íconos comunes (como en esta app)
+#   - Usa material-icons-extended solo si necesitas íconos específicos que no están en core
+#   - En producción, considera usar íconos individuales como recursos drawable para
+#     minimizar el tamaño del APK
+# ===============================================================================
+androidx-compose-material-icons-core = { group = "androidx.compose.material", name = "material-icons-core" }
+
+# -----------------------------------------------------------------------------
+# SECCIÓN DE PLUGINS
+# -----------------------------------------------------------------------------
+# Los plugins extienden la funcionalidad de Gradle.
+# Se aplican en build.gradle.kts con: plugins { alias(libs.plugins.xxx) }
+# -----------------------------------------------------------------------------
+[plugins]
+
+# --- Android Application Plugin ---
+# Plugin para crear una aplicación Android (genera APK/AAB).
+android-application = { id = "com.android.application", version.ref = "agp" }
+
+# --- Kotlin Android Plugin ---
+# Habilita el soporte de Kotlin para proyectos Android.
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+
+# --- Compose Compiler Plugin ---
+# A partir de Kotlin 2.0, el compilador de Compose es un plugin separado.
+# Este plugin es OBLIGATORIO para usar Jetpack Compose.
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+
+# -----------------------------------------------------------------------------
+# SECCIÓN DE BUNDLES (OPCIONAL)
+# -----------------------------------------------------------------------------
+# Los bundles agrupan dependencias relacionadas para importarlas juntas.
+# Ejemplo: implementation(libs.bundles.compose) importa todas las de Compose.
+# -----------------------------------------------------------------------------
+[bundles]
+
+# Bundle con todas las dependencias core de Compose
+compose = [
+    "androidx-compose-ui",
+    "androidx-compose-ui-graphics",
+    "androidx-compose-ui-tooling-preview",
+    "androidx-compose-material3",
+    "androidx-compose-material-icons-core"
+]

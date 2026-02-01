@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+==============================================================================
+IC_LAUNCHER.XML - Ícono Adaptativo de la Aplicación
+==============================================================================
+Este archivo define un "Adaptive Icon" que funciona en Android 8.0+ (API 26+).
+
+Los íconos adaptativos tienen varias ventajas:
+  1. Se adaptan a la forma del launcher (círculo, cuadrado, blob, etc.)
+  2. Pueden tener animaciones (parallax, etc.)
+  3. Consistencia visual con otras apps del sistema
+
+El ícono se compone de dos capas que el sistema puede animar independientemente.
+==============================================================================
+-->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Capa de fondo: color sólido o imagen -->
+    <background android:drawable="@drawable/ic_launcher_background" />
+
+    <!-- Capa frontal: el símbolo/ícono principal -->
+    <foreground android:drawable="@drawable/ic_launcher_foreground" />
+</adaptive-icon>
