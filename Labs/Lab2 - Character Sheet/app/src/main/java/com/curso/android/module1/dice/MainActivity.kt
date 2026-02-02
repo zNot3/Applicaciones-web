@@ -105,7 +105,7 @@ fun CharacterCreationScreen() {
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
 
-            Text(text = "PUNTAJE TOTAL: $totalScore", fontSize = 32.sp, fontWeight = FontWeight.Bold)
+            Text(text = "Total Score: $totalScore", fontSize = 32.sp, fontWeight = FontWeight.Bold)
 
             val (message, color) = when {
                 totalScore >= 50 -> "Godlike rolls" to Color(0xFFFFD700)
