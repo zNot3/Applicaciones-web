@@ -16,6 +16,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 
+enum class Light { Red, Yellow, Green }
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,9 +26,8 @@ class MainActivity : ComponentActivity() {
                 Surface (
                     modifier = Modifier.fillMaxSize(),
                     color = Color.DarkGray
-                    ) {
-                        TrafficLightSimulator()
-                    }
+                ) {
+                    TrafficLightSimulator()
                 }
             }
         }
@@ -34,7 +35,28 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun TrafficLightSimulator() {}
+fun TrafficLightSimulator() {
+    var currentLight by remember { mutableStateOf(Light.Red) }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            currentLight = Light.Red
+            delay(2000)
+            currentLight = Light.Green
+            delay(2000)
+            currentLight = Light.Yellow
+            delay(1000)
+        }
+    }
+
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+
+    }
+}
 
 @Composable
 fun TrafficLightCircle(color: Color) {}
