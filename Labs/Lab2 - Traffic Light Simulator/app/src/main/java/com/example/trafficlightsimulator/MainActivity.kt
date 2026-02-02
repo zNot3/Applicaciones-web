@@ -54,9 +54,27 @@ fun TrafficLightSimulator() {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .background(Color.Black, shape = MaterialTheme.shapes.medium)
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            TrafficLightCircle(
+                color = if (currentLight == Light.Red) Color.Red else Color.Gray
+            )
+            TrafficLightCircle(
+                color = if (currentLight == Light.Yellow) Color.Yellow else Color.Gray
+            )
+            TrafficLightCircle(
+                color = if (currentLight == Light.Green) Color.Green else Color.Gray
+            )
+        }
     }
 }
 
 @Composable
-fun TrafficLightCircle(color: Color) {}
+fun TrafficLightCircle(color: Color) {
+    
+}
