@@ -1,15 +1,5 @@
 package com.curso.android.module1.dice
 
-// =============================================================================
-// IMPORTACIONES
-// =============================================================================
-// Organizamos las importaciones por categoría para mejor legibilidad.
-// En Kotlin/Android, usamos import para traer clases y funciones externas.
-// =============================================================================
-
-// --- Android Core ---
-// Bundle: Contenedor de datos que Android usa para pasar información entre componentes
-// Log: Clase para imprimir mensajes de depuración en Logcat
 import android.os.Bundle
 import android.util.Log
 
@@ -73,77 +63,12 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-// =============================================================================
-// CONSTANTES
-// =============================================================================
-// Definimos constantes en el nivel superior del archivo (top-level) para
-// que sean accesibles en toda la clase. Usamos 'const val' para valores
-// que se conocen en tiempo de compilación.
-// =============================================================================
+private const val TAG = "CharacterSheet"
+private const val MIN_STAT = 3
+private const val MAX_STAT = 18
+private const val THRESHOLD_BAD = 30
+private const val THRESHOLD_GODLY = 50
 
-/**
- * TAG para mensajes de Log.
- * Por convención, usamos el nombre de la clase como TAG.
- * Esto facilita filtrar los logs en Logcat.
- */
-private const val TAG = "MainActivity"
-
-/**
- * Número de iteraciones de la animación del dado.
- * Cada iteración muestra un número aleatorio antes del resultado final.
- */
-private const val ANIMATION_ITERATIONS = 15
-
-/**
- * Duración de cada iteración de la animación en milisegundos.
- * 80ms x 15 iteraciones = 1.2 segundos de animación total.
- */
-private const val ANIMATION_DELAY_MS = 80L
-
-/**
- * Valor máximo del dado D20 (dado de 20 caras usado en RPGs).
- */
-private const val MAX_DICE_VALUE = 20
-
-/**
- * Valor mínimo del dado.
- */
-private const val MIN_DICE_VALUE = 1
-
-// =============================================================================
-// MAIN ACTIVITY
-// =============================================================================
-/**
- * MainActivity es el punto de entrada de nuestra aplicación.
- *
- * ## Ciclo de Vida de una Activity
- * Una Activity pasa por varios estados durante su vida:
- *
- * ```
- * onCreate() → onStart() → onResume() → [RUNNING] → onPause() → onStop() → onDestroy()
- *     ↑                                                              ↓
- *     └──────────────────────────────────────────────────────────────┘
- * ```
- *
- * - **onCreate()**: Se llama UNA vez cuando la Activity se crea.
- *   Aquí inicializamos la UI y configuraciones.
- *
- * - **onStart()**: La Activity se vuelve visible.
- *
- * - **onResume()**: La Activity está en primer plano e interactiva.
- *
- * - **onPause()**: Otra Activity está tomando el foco (ej: diálogo).
- *
- * - **onStop()**: La Activity ya no es visible.
- *
- * - **onDestroy()**: La Activity se está destruyendo (rotación, back, etc.)
- *
- * ## ¿Por qué heredamos de ComponentActivity?
- * ComponentActivity es la Activity base moderna de AndroidX que:
- * - Soporta Jetpack Compose (setContent {})
- * - Soporta el nuevo sistema de resultados (ActivityResultContracts)
- * - Es más ligera que AppCompatActivity (no incluye ActionBar, etc.)
- */
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -168,14 +93,11 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CharacterCreationScreen() {
+    var vit by rememberSaveable { mutableIntStateOf(10) }
+    var dex by rememberSaveable { mutableIntStateOf(10) }
+    var wis by rememberSaveable { mutableIntStateOf(10) }
 
-    var diceValue by rememberSaveable { mutableIntStateOf(MIN_DICE_VALUE) }
-
-    var isRolling by remember { mutableStateOf(false) }
-
-    var resultMessage by rememberSaveable { mutableStateOf("Toca el botón para lanzar") }
-
-    val coroutineScope = rememberCoroutineScope()
+    val totalScore = vit + dex + wis
 
     fun rollDice() {
         Log.d(TAG, "rollDice: Iniciando lanzamiento del dado")
