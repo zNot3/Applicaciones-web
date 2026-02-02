@@ -99,46 +99,12 @@ fun CharacterCreationScreen() {
 
     val totalScore = vit + dex + wis
 
-    fun rollDice() {
-        Log.d(TAG, "rollDice: Iniciando lanzamiento del dado")
-
-        coroutineScope.launch {
-            isRolling = true
-            resultMessage = "Lanzando..."
-
-            Log.d(TAG, "rollDice: Animación iniciada")
-
-            repeat(ANIMATION_ITERATIONS) { iteration ->
-                diceValue = (MIN_DICE_VALUE..MAX_DICE_VALUE).random()
-
-                Log.d(TAG, "rollDice: Iteración ${iteration + 1}/$ANIMATION_ITERATIONS, valor temporal: $diceValue")
-
-                delay(ANIMATION_DELAY_MS)
-            }
-
-            val finalValue = (MIN_DICE_VALUE..MAX_DICE_VALUE).random()
-            diceValue = finalValue
-
-            Log.d(TAG, "rollDice: Resultado final: $finalValue")
-
-            resultMessage = when (finalValue) {
-                MAX_DICE_VALUE -> "¡CRITICAL HIT! ⚔"
-                MIN_DICE_VALUE -> "¡CRITICAL MISS! 💀"
-                else -> "Resultado: $finalValue"
-            }
-
-            isRolling = false
-
-            Log.d(TAG, "rollDice: Lanzamiento completado. Mensaje: $resultMessage")
-        }
-    }
-
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        text = "RPG Dice Roller",
+                        text = "RPG Character Sheet",
                         style = MaterialTheme.typography.titleLarge
                     )
                 }
@@ -150,39 +116,34 @@ fun CharacterCreationScreen() {
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(horizontal = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
-            Box(
-                modifier = Modifier
-                    .size(200.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = diceValue.toString(),
-                    fontSize = 96.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = getDiceValueColor(diceValue, isRolling),
-                    textAlign = TextAlign.Center
-                )
-            }
+            Text(
+                text = "Roll dices for your attributes",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Text(
-                text = resultMessage,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = if (diceValue == MAX_DICE_VALUE || diceValue == MIN_DICE_VALUE) {
-                    FontWeight.Bold
-                } else {
-                    FontWeight.Normal
-                },
-                color = getDiceValueColor(diceValue, isRolling),
-                textAlign = TextAlign.Center
-            )
+            StatRow(label = "VITALIDAD", value = vit) {
+                vit = (MIN_STAT..MAX_STAT).random()
+                Log.d(TAG, "Nuevo valor VIT: $vit")
+            }
 
-            Spacer(modifier = Modifier.height(48.dp))
+            StatRow(label = "DESTREZA", value = dex) {
+                dex = (MIN_STAT..MAX_STAT).random()
+                Log.d(TAG, "Nuevo valor DEX: $dex")
+            }
+
+            StatRow(label = "SABIDURÍA", value = wis) {
+                wis = (MIN_STAT..MAX_STAT).random()
+                Log.d(TAG, "Nuevo valor WIS: $wis")
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
 
             Button(
                 onClick = { rollDice() },
@@ -219,28 +180,52 @@ fun CharacterCreationScreen() {
     }
 }
 
-private fun getDiceValueColor(value: Int, isRolling: Boolean): Color {
-    return when {
-        isRolling -> Color(0xFF666666)
+@Composable
+fun StatRow (label: String, value: Int, onRoll: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = label, style = MaterialTheme.typography.labelMedium)
+                Text(
+                    text = value.toString(),
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
 
-        value == MAX_DICE_VALUE -> Color(0xFFFFD700)  // Gold
-
-        value == MIN_DICE_VALUE -> Color(0xFFDC143C)  // Crimson
-
-        else -> Color(0xFF333333)
+            Button(
+                onClick = onRoll,
+                modifier = Modifier.height(50.dp)
+            ) {
+                Icon(Icons.Default.Refresh, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("ROLL")
+            }
+        }
     }
 }
 
-@Preview(
+@Preview (
     showBackground = true,
-    showSystemUi = true,
-    name = "Dice Roller Preview"
+    showSystemUi = true
 )
+
 @Composable
-fun DiceRollerScreenPreview() {
+fun CharacterPreview() {
     MaterialTheme {
-        DiceRollerScreen()
+        CharacterCreationScreen()
     }
 }
-@Composable
-fun StatRow () {}
