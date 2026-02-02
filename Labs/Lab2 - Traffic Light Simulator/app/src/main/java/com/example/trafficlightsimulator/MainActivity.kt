@@ -76,5 +76,7 @@ fun TrafficLightSimulator() {
 
 @Composable
 fun TrafficLightCircle(color: Color) {
-    
+    Box(
+        modifier = Modifier.size(100.dp).clip(CircleShape).background(color)
+    )
 }
