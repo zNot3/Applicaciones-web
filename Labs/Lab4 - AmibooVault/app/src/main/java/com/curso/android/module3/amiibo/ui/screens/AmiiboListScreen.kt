@@ -275,7 +275,7 @@ private fun AmiiboGrid(
                     totalItems > 0
         }
     }
-
+ //--
     LaunchedEffect(shouldLoadMore) {
         if (shouldLoadMore) {
             onLoadMore()
