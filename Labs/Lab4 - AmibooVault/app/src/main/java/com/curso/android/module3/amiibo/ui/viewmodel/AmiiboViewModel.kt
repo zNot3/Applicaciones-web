@@ -19,8 +19,7 @@ sealed interface AmiiboUiState {
 
     data class Error(
         val message: String,
-        val isRetryable: Boolean = true,
-        val cachedData: List<AmiiboEntity>? = null
+        val cachedData: List<AmiiboEntity>? = null // Para Graceful Offline
     ) : AmiiboUiState
 }
 
@@ -37,6 +36,11 @@ class AmiiboViewModel(
     private val _hasMorePages = MutableStateFlow(true)
     private val _isLoadingMore = MutableStateFlow(false)
     val isLoadingMore: StateFlow<Boolean> = _isLoadingMore.asStateFlow()
+    val pageSize: StateFlow<Int> = _pageSize.asStateFlow()
+    val hasMorePages: StateFlow<Boolean> = _hasMorePages.asStateFlow()
+    private val _paginationError = MutableStateFlow<String?>(null)
+    val paginationError: StateFlow<String?> = _paginationError.asStateFlow()
+    val pageSizeOptions: List<Int> = AmiiboRepository.PAGE_SIZE_OPTIONS
 
     init {
         refreshAmiibos()
@@ -70,13 +74,18 @@ class AmiiboViewModel(
                 )
 
             } catch (e: Exception) {
-
                 _uiState.value = AmiiboUiState.Error(
-                    message = e.localizedMessage ?: "Error desconocido",
-                    isRetryable = true,
-                    cachedData = _loadedAmiibos.value
+                    message = e.localizedMessage ?: "Error de conexión",
+                    cachedData = _loadedAmiibos.value // Guardamos los datos viejos
                 )
             }
+        }
+    }
+
+    fun setPageSize(newSize: Int) {
+        if (newSize != _pageSize.value && newSize in pageSizeOptions) {
+            _pageSize.value = newSize
+            refreshAmiibos()
         }
     }
 
@@ -85,6 +94,7 @@ class AmiiboViewModel(
 
         viewModelScope.launch {
             _isLoadingMore.value = true
+            _paginationError.value = null
             try {
                 val nextPage = _currentPage.value + 1
                 val newItems = repository.getAmiibosPage(nextPage, _pageSize.value)
@@ -102,19 +112,19 @@ class AmiiboViewModel(
                     _hasMorePages.value = false
                 }
             } catch (e: Exception) {
-                _uiState.value = AmiiboUiState.Error(
-                    message = "Error al cargar más: ${e.message}",
-                    cachedData = _loadedAmiibos.value
-                )
+                _paginationError.value = "Error al cargar más"
             } finally {
                 _isLoadingMore.value = false
             }
         }
     }
 
+    fun retryLoadMore() { loadNextPage() }
+
     private fun resetPagination() {
         _currentPage.value = 0
         _loadedAmiibos.value = emptyList()
         _hasMorePages.value = true
+        _paginationError.value = null
     }
 }
