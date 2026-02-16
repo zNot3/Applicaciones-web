@@ -2,17 +2,68 @@ package com.curso.android.module3.amiibo.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.CloudOff
+import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Replay
+import androidx.compose.material.icons.filled.Storage
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -23,6 +74,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.curso.android.module3.amiibo.R
 import com.curso.android.module3.amiibo.data.local.entity.AmiiboEntity
+import com.curso.android.module3.amiibo.domain.error.ErrorType
 import com.curso.android.module3.amiibo.ui.viewmodel.AmiiboUiState
 import com.curso.android.module3.amiibo.ui.viewmodel.AmiiboViewModel
 import org.koin.androidx.compose.koinViewModel
@@ -33,7 +85,6 @@ fun AmiiboListScreen(
     onAmiiboClick: (String) -> Unit = {},
     viewModel: AmiiboViewModel = koinViewModel()
 ) {
-
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val pageSize by viewModel.pageSize.collectAsStateWithLifecycle()
     val hasMorePages by viewModel.hasMorePages.collectAsStateWithLifecycle()
@@ -41,13 +92,11 @@ fun AmiiboListScreen(
     val paginationError by viewModel.paginationError.collectAsStateWithLifecycle()
 
     var showPageSizeDropdown by remember { mutableStateOf(false) }
-
     val snackbarHostState = remember { SnackbarHostState() }
 
     if (uiState is AmiiboUiState.Error) {
         val errorState = uiState as AmiiboUiState.Error
         if (!errorState.cachedData.isNullOrEmpty()) {
-
             LaunchedEffect(errorState.message) {
                 val result = snackbarHostState.showSnackbar(
                     message = errorState.message,
@@ -63,30 +112,15 @@ fun AmiiboListScreen(
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
-
         topBar = {
             TopAppBar(
-                title = {
-                    Text(
-                        text = stringResource(R.string.app_name),
-                        style = MaterialTheme.typography.titleLarge
-                    )
-                },
+                title = { Text(stringResource(R.string.app_name)) },
                 actions = {
                     Box {
                         TextButton(onClick = { showPageSizeDropdown = true }) {
-                            Text(
-                                text = "Página: $pageSize",
-                                style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                            Icon(
-                                imageVector = Icons.Default.ArrowDropDown,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
+                            Text("Página: $pageSize")
+                            Icon(Icons.Default.ArrowDropDown, contentDescription = null)
                         }
-
                         DropdownMenu(
                             expanded = showPageSizeDropdown,
                             onDismissRequest = { showPageSizeDropdown = false }
@@ -97,20 +131,13 @@ fun AmiiboListScreen(
                                     onClick = {
                                         viewModel.setPageSize(size)
                                         showPageSizeDropdown = false
-                                    },
-                                    leadingIcon = if (size == pageSize) {
-                                        { Text("✓") }
-                                    } else null
+                                    }
                                 )
                             }
                         }
                     }
-
                     IconButton(onClick = { viewModel.refreshAmiibos() }) {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = stringResource(R.string.retry)
-                        )
+                        Icon(Icons.Default.Refresh, contentDescription = "Refrescar")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -123,7 +150,9 @@ fun AmiiboListScreen(
 
         when (val state = uiState) {
             is AmiiboUiState.Loading -> {
-                LoadingContent(modifier = Modifier.padding(paddingValues))
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
             }
 
             is AmiiboUiState.Success -> {
@@ -166,8 +195,6 @@ fun AmiiboListScreen(
                 } else {
                     ErrorContent(
                         message = state.message,
-                        errorType = if(state.error is AmiiboError) (state.error as AmiiboError).type else ErrorType.UNKNOWN,
-                        isRetryable = state.isRetryable,
                         onRetry = { viewModel.refreshAmiibos() },
                         modifier = Modifier.padding(paddingValues)
                     )
@@ -178,32 +205,8 @@ fun AmiiboListScreen(
 }
 
 @Composable
-private fun LoadingContent(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(48.dp)
-            )
-            Text(
-                text = stringResource(R.string.loading_amiibos),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
-
-@Composable
 private fun ErrorContent(
     message: String,
-    errorType: ErrorType,
-    isRetryable: Boolean,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -217,28 +220,23 @@ private fun ErrorContent(
             modifier = Modifier.padding(32.dp)
         ) {
             Icon(
-                imageVector = errorType.toIcon(),
+                imageVector = Icons.Default.CloudOff, // Icono genérico por defecto
                 contentDescription = null,
                 modifier = Modifier.size(64.dp),
                 tint = MaterialTheme.colorScheme.error
             )
-
             Text(
-                text = stringResource(R.string.error_loading),
+                text = "Error de conexión",
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.error
             )
             Text(
                 text = message,
                 style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                textAlign = TextAlign.Center
             )
-
-            if (isRetryable) {
-                Button(onClick = onRetry) {
-                    Text(text = stringResource(R.string.retry))
-                }
+            Button(onClick = onRetry) {
+                Text(text = "Reintentar")
             }
         }
     }
