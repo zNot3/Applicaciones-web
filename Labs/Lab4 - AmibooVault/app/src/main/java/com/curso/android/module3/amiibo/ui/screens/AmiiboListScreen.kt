@@ -250,52 +250,6 @@ private fun ErrorType.toIcon(): ImageVector = when (this) {
 }
 
 @Composable
-private fun ErrorBanner(
-    message: String,
-    errorType: ErrorType,
-    isRetryable: Boolean,
-    onRetry: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(8.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Icon(
-                imageVector = errorType.toIcon(),
-                contentDescription = null,
-                modifier = Modifier.size(24.dp),
-                tint = MaterialTheme.colorScheme.onErrorContainer
-            )
-
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onErrorContainer,
-                modifier = Modifier.padding(top = 4.dp)
-            )
-
-            if (isRetryable) {
-                Button(
-                    onClick = onRetry,
-                    modifier = Modifier.padding(top = 8.dp)
-                ) {
-                    Text(text = stringResource(R.string.retry))
-                }
-            }
-        }
-    }
-}
-
-@Composable
 private fun AmiiboGrid(
     amiibos: List<AmiiboEntity>,
     onAmiiboClick: (String) -> Unit,
