@@ -85,41 +85,37 @@ class CameraUtils(private val context: Context) {
      */
     suspend fun capturePhoto(imageCapture: ImageCapture): Uri {
         return suspendCancellableCoroutine { continuation ->
-            // Crear archivo de destino
             val photoFile = createImageFile()
-
-            // Configurar opciones de salida
-            // OutputFileOptions define dónde y cómo guardar la imagen
             val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
 
-            // Ejecutar captura en el executor principal
-            // NOTA: La captura real es asíncrona, no bloquea el main thread
             imageCapture.takePicture(
                 outputOptions,
                 ContextCompat.getMainExecutor(context),
                 object : ImageCapture.OnImageSavedCallback {
                     override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                        // Éxito: retornar URI del archivo
                         val savedUri = Uri.fromFile(photoFile)
                         continuation.resume(savedUri)
                     }
 
                     override fun onError(exception: ImageCaptureException) {
-                        // Error: propagar excepción
-                        // Limpiar archivo si se creó pero falló la escritura
+                        val captureError = when (exception.imageCaptureError) {
+                            ImageCapture.ERROR_CAMERA_CLOSED ->
+                                CaptureError.CameraClosed
+                            ImageCapture.ERROR_CAPTURE_FAILED ->
+                                CaptureError.HardwareFailure(exception.imageCaptureError)
+                            ImageCapture.ERROR_FILE_IO ->
+                                CaptureError.FileIOError(exception)
+                            else ->
+                                CaptureError.HardwareFailure(exception.imageCaptureError)
+                        }
                         photoFile.delete()
-                        continuation.resumeWithException(exception)
+                        continuation.resumeWithException(CaptureException(captureError))
                     }
                 }
             )
 
-            // Limpieza si la coroutine se cancela antes de completar
             continuation.invokeOnCancellation {
-                // Nota: No podemos cancelar takePicture una vez iniciado
-                // pero podemos limpiar el archivo si existe
-                if (photoFile.exists()) {
-                    photoFile.delete()
-                }
+                if (photoFile.exists()) photoFile.delete()
             }
         }
     }
@@ -170,4 +166,30 @@ class CameraUtils(private val context: Context) {
             false
         }
     }
+
+    override fun onError(exception: ImageCaptureException) {
+        val captureError = when (exception.imageCaptureError) {
+            ImageCapture.ERROR_CAMERA_CLOSED  -> CaptureError.CameraClosed
+            ImageCapture.ERROR_CAPTURE_FAILED -> CaptureError.HardwareFailure(exception.imageCaptureError)
+            ImageCapture.ERROR_FILE_IO        -> CaptureError.FileIOError(exception)
+            else                              -> CaptureError.HardwareFailure(exception.imageCaptureError)
+        }
+        if (photoFile.exists()) photoFile.delete()
+        continuation.resumeWithException(CaptureException(captureError))
+    }
 }
+
+// Agregar AL FINAL del archivo, fuera de la clase CameraUtils:
+sealed class CaptureError {
+    data object CameraClosed : CaptureError()
+    data class HardwareFailure(val code: Int) : CaptureError()
+    data class FileIOError(val cause: Throwable) : CaptureError()
+
+    fun toUserMessage(): String = when (this) {
+        is CameraClosed    -> "La cámara se cerró inesperadamente. Intenta de nuevo."
+        is HardwareFailure -> "Error de hardware en la cámara (código $code)."
+        is FileIOError     -> "No se pudo guardar la foto. Verifica el almacenamiento."
+    }
+}
+
+class CaptureException(val error: CaptureError) : Exception(error.toUserMessage())
