@@ -174,6 +174,9 @@ class MapViewModel(
                         _errorMessage.value = result.message
                         _captureResult.value = false
                     }
+                    is CreateSpotResult.PhotoCaptureFailed -> {
+                        _errorMessage.value = result.error.toUserMessage()
+                    }
                 }
             } catch (e: Exception) {
                 _errorMessage.value = "Error al capturar: ${e.message}"

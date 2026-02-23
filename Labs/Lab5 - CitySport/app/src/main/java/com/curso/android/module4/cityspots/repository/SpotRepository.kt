@@ -172,7 +172,8 @@ class SpotRepository(
      */
     suspend fun createSpot(imageCapture: ImageCapture): CreateSpotResult {
         // 1. Capturar la foto
-        val photoUri = capturePhoto(imageCapture)
+        val photoUri = try { capturePhoto(imageCapture) }
+            catch (e: CaptureException) { return CreateSpotResult.PhotoCaptureFailed(e.error) }
 
         // 2. Obtener ubicación actual
         val location = getCurrentLocation()
@@ -216,16 +217,9 @@ class SpotRepository(
     }
 }
 
-/**
- * Resultado de la creación de un Spot
- *
- * Sealed class que representa los posibles resultados de createSpot():
- * - Success: Spot creado exitosamente
- * - NoLocation: No se pudo obtener la ubicación GPS
- * - InvalidCoordinates: Las coordenadas GPS son inválidas
- */
 sealed class CreateSpotResult {
     data class Success(val spot: SpotEntity) : CreateSpotResult()
     data object NoLocation : CreateSpotResult()
     data class InvalidCoordinates(val message: String) : CreateSpotResult()
+    data class PhotoCaptureFailed(val error: CaptureError) : CreateSpotResult()
 }
