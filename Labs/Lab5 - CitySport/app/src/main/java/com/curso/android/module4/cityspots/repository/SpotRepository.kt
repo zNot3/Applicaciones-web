@@ -10,6 +10,8 @@ import com.curso.android.module4.cityspots.utils.CoordinateValidator
 import com.curso.android.module4.cityspots.utils.LocationUtils
 import kotlinx.coroutines.flow.Flow
 import androidx.core.net.toUri
+import com.curso.android.module4.cityspots.utils.CaptureError
+import com.curso.android.module4.cityspots.utils.CaptureException
 
 /**
  * =============================================================================
