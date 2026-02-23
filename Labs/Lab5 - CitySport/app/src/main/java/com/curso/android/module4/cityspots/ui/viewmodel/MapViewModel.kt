@@ -200,6 +200,23 @@ class MapViewModel(
     fun clearError() {
         _errorMessage.value = null
     }
+    
+    private val _spotPendingDeletion = MutableStateFlow<SpotEntity?>(null)
+    val spotPendingDeletion: StateFlow<SpotEntity?> = _spotPendingDeletion.asStateFlow()
 
+    fun requestDeleteSpot(spot: SpotEntity) {
+        _spotPendingDeletion.value = spot
+    }
 
+    fun confirmDeleteSpot() {
+        val spot = _spotPendingDeletion.value ?: return
+        viewModelScope.launch {
+            repository.deleteSpot(spot)
+            _spotPendingDeletion.value = null
+        }
+    }
+
+    fun cancelDeleteSpot() {
+        _spotPendingDeletion.value = null
+    }
 }
