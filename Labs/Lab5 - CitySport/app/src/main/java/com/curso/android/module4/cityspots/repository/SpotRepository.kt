@@ -9,6 +9,7 @@ import com.curso.android.module4.cityspots.utils.CameraUtils
 import com.curso.android.module4.cityspots.utils.CoordinateValidator
 import com.curso.android.module4.cityspots.utils.LocationUtils
 import kotlinx.coroutines.flow.Flow
+import androidx.core.net.toUri
 
 /**
  * =============================================================================
@@ -91,7 +92,10 @@ class SpotRepository(
         return spotDao.insertSpot(spot)
     }
 
-
+    suspend fun deleteSpot(spot: SpotEntity) {
+        spotDao.deleteSpot(spot.id)
+        cameraUtils.deleteImage(spot.imageUri.toUri())
+    }
 
     /**
      * Obtiene el número de spots para generar títulos secuenciales
