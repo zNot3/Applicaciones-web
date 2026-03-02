@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    CHALLENGE LAB Part 2 - FileProvider paths config
+    Guardar en: res/xml/file_provider_paths.xml
+
+    CONCEPTO: FileProvider
+    Android no permite que otras apps accedan directamente a los archivos
+    privados de tu app. FileProvider genera URIs temporales con permisos
+    de lectura que se otorgan al momento de compartir.
+
+    cache-path: apunta a context.cacheDir (almacenamiento temporal)
+    name="shared_images": el subdirectorio donde guardamos el JPG
+-->
+<paths>
+    <cache-path
+        name="shared_images"
+        path="shared_images/" />
+</paths>
