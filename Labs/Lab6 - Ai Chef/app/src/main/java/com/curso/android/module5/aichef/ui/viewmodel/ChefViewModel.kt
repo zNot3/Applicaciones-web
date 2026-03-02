@@ -310,26 +310,7 @@ class ChefViewModel @Inject constructor(
     // =========================================================================
     // CHALLENGE LAB Part 2: Compartir Receta
     // =========================================================================
-
-    /**
-     * Comparte la imagen capturada del detalle de receta usando el share sheet nativo.
-     *
-     * CONCEPTO: FileProvider
-     * Android no permite compartir archivos directamente desde el directorio privado
-     * de la app. FileProvider genera una URI temporal con permisos de lectura
-     * que otras apps pueden usar para acceder al archivo.
-     *
-     * FLUJO:
-     * 1. Recibir el Bitmap capturado por la UI (PixelMap de Compose)
-     * 2. Guardar el Bitmap como archivo JPG temporal en cache
-     * 3. Obtener URI segura via FileProvider
-     * 4. Lanzar Intent de ACTION_SEND con la URI
-     * 5. Limpiar el archivo temporal después de compartir
-     *
-     * @param context Context para acceder a FileProvider y startActivity
-     * @param bitmap  Bitmap capturado del composable RecipeDetailScreen
-     * @param recipeTitle Título de la receta (para el texto del share)
-     */
+    
     fun shareRecipe(context: Context, bitmap: Bitmap, recipeTitle: String) {
         viewModelScope.launch {
             _shareState.value = UiState.Loading("Preparando imagen para compartir...")
