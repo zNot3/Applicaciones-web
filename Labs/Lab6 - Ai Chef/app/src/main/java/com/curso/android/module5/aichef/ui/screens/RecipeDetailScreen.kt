@@ -267,9 +267,13 @@ private fun AiImageSection(
                             modifier = Modifier.size(32.dp),
                             tint = MaterialTheme.colorScheme.primary
                         )
+                        val message = if (imageState is UiState.Loading) {
+                            imageState.message ?: "Preparando..."
+                        } else {
+                            "Preparando..."
+                        }
                         Text(
-                            text = if (imageState is UiState.Loading) imageState.message
-                            else "Preparando...",
+                            text = message,
                             style = MaterialTheme.typography.bodySmall
                         )
                     }
