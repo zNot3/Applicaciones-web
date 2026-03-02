@@ -104,8 +104,9 @@ fun RecipeDetailScreen(
 
     // CHALLENGE LAB Part 2: Mostrar Snackbar si hay error al compartir
     LaunchedEffect(shareState) {
-        if (shareState is UiState.Error) {
-            snackbarHostState.showSnackbar(shareState.message)
+        val currentState = shareState
+        if (currentState is UiState.Error) {
+            snackbarHostState.showSnackbar(currentState.message)
             viewModel.clearShareState()
         }
     }
@@ -168,7 +169,8 @@ fun RecipeDetailScreen(
                         viewModel.shareRecipe(context, bitmap, it.title)
                     },
                     icon = {
-                        if (shareState is UiState.Loading) {
+                        val currentState = shareState
+                        if (currentState is UiState.Loading) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(18.dp),
                                 strokeWidth = 2.dp
@@ -177,7 +179,10 @@ fun RecipeDetailScreen(
                             Icon(Icons.Default.Share, contentDescription = "Compartir")
                         }
                     },
-                    text = { Text(if (shareState is UiState.Loading) "Preparando..." else "Compartir") },
+                    text = {
+                        val currentState = shareState
+                        Text(if (currentState is UiState.Loading) "Preparando..." else "Compartir")
+                    },
                     containerColor = MaterialTheme.colorScheme.secondaryContainer
                 )
             }
