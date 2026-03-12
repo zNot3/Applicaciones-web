@@ -11,21 +11,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
-/**
- * ============================================================================
- * AMIIBO VAULT THEME - Material 3 Theme Configuration
- * ============================================================================
- *
- * Material 3 (Material You) es el sistema de diseño más reciente de Google.
- * Características principales:
- * - Dynamic Color: Colores basados en el wallpaper del usuario (Android 12+)
- * - Color Schemes: Esquemas de colores predefinidos
- * - Typography: Sistema tipográfico unificado
- * - Shapes: Formas redondeadas personalizables
- *
- * ============================================================================
- */
-
 // Colores personalizados para el tema claro
 private val LightColorScheme = lightColorScheme(
     primary = Color(0xFFE60012),      // Rojo Nintendo
@@ -86,13 +71,6 @@ private val DarkColorScheme = darkColorScheme(
     inversePrimary = Color(0xFFE60012),
 )
 
-/**
- * Tema principal de la aplicación.
- *
- * @param darkTheme Si true, usa el tema oscuro
- * @param dynamicColor Si true y Android 12+, usa colores dinámicos del wallpaper
- * @param content Contenido composable que usará este tema
- */
 @Composable
 fun AmiiboVaultTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),

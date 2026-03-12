@@ -9,21 +9,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-/**
- * Estados posibles de la pantalla de detalle.
- */
 sealed interface AmiiboDetailUiState {
     data object Loading : AmiiboDetailUiState
     data class Success(val amiibo: AmiiboDetail) : AmiiboDetailUiState
     data class Error(val message: String) : AmiiboDetailUiState
 }
 
-/**
- * ViewModel para la pantalla de detalle de un Amiibo.
- *
- * @param amiiboName Nombre del Amiibo a mostrar (pasado como parámetro de navegación)
- * @param repository Repositorio para obtener los datos
- */
 class AmiiboDetailViewModel(
     private val amiiboName: String,
     private val repository: AmiiboRepository
@@ -36,9 +27,6 @@ class AmiiboDetailViewModel(
         loadAmiiboDetail()
     }
 
-    /**
-     * Carga el detalle del Amiibo desde la API.
-     */
     fun loadAmiiboDetail() {
         viewModelScope.launch {
             _uiState.value = AmiiboDetailUiState.Loading

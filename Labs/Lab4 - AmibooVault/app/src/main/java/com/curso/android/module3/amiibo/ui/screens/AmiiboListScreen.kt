@@ -23,10 +23,12 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Replay
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
@@ -40,6 +42,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
@@ -75,6 +78,7 @@ import coil3.compose.AsyncImage
 import com.curso.android.module3.amiibo.R
 import com.curso.android.module3.amiibo.data.local.entity.AmiiboEntity
 import com.curso.android.module3.amiibo.domain.error.ErrorType
+import com.curso.android.module3.amiibo.ui.viewmodel.AmiiboUiEvent
 import com.curso.android.module3.amiibo.ui.viewmodel.AmiiboUiState
 import com.curso.android.module3.amiibo.ui.viewmodel.AmiiboViewModel
 import org.koin.androidx.compose.koinViewModel
@@ -91,36 +95,74 @@ fun AmiiboListScreen(
     val isLoadingMore by viewModel.isLoadingMore.collectAsStateWithLifecycle()
     val paginationError by viewModel.paginationError.collectAsStateWithLifecycle()
 
-    var showPageSizeDropdown by remember { mutableStateOf(false) }
+    // PART 2: Estado del campo de búsqueda
+    val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
+
+    // PART 1: SnackbarHostState para mostrar errores de red sin perder el grid
     val snackbarHostState = remember { SnackbarHostState() }
 
-    if (uiState is AmiiboUiState.Error) {
-        val errorState = uiState as AmiiboUiState.Error
-        if (!errorState.cachedData.isNullOrEmpty()) {
-            LaunchedEffect(errorState.message) {
-                val result = snackbarHostState.showSnackbar(
-                    message = errorState.message,
-                    actionLabel = "Reintentar",
-                    duration = SnackbarDuration.Long
-                )
-                if (result == SnackbarResult.ActionPerformed) {
-                    viewModel.refreshAmiibos()
+    var showPageSizeDropdown by remember { mutableStateOf(false) }
+
+    // =========================================================================
+    // PART 1 - DoD: Snackbar shown + Retry available
+    // =========================================================================
+    /**
+     * Escuchamos el SharedFlow de eventos de UI.
+     * Cuando el ViewModel emite ShowNetworkErrorSnackbar, mostramos el Snackbar.
+     *
+     * LaunchedEffect con snackbarHostState como key garantiza que se ejecuta
+     * en el scope del composable y se cancela si este desaparece.
+     *
+     * DoD: Snackbar has "Retry" action button
+     * DoD: Dismiss works — Snackbar can be dismissed without affecting grid
+     */
+    LaunchedEffect(snackbarHostState) {
+        viewModel.uiEvent.collect { event ->
+            when (event) {
+                is AmiiboUiEvent.ShowNetworkErrorSnackbar -> {
+                    val result = snackbarHostState.showSnackbar(
+                        message = event.message,
+                        actionLabel = "Reintentar",
+                        duration = SnackbarDuration.Long
+                    )
+                    // DoD: Retry available — acción del Snackbar llama a refreshAmiibos
+                    if (result == SnackbarResult.ActionPerformed) {
+                        viewModel.refreshAmiibos()
+                    }
+                    // DoD: Dismiss works — si el usuario descarta, el grid sigue intacto
                 }
             }
         }
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
+        // PART 1: SnackbarHost registrado en el Scaffold
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.app_name)) },
+                title = {
+                    Text(
+                        text = stringResource(R.string.app_name),
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                },
                 actions = {
                     Box {
-                        TextButton(onClick = { showPageSizeDropdown = true }) {
-                            Text("Página: $pageSize")
-                            Icon(Icons.Default.ArrowDropDown, contentDescription = null)
+                        TextButton(
+                            onClick = { showPageSizeDropdown = true }
+                        ) {
+                            Text(
+                                text = "Página: $pageSize",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                            Icon(
+                                imageVector = Icons.Default.ArrowDropDown,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
                         }
+
                         DropdownMenu(
                             expanded = showPageSizeDropdown,
                             onDismissRequest = { showPageSizeDropdown = false }
@@ -131,13 +173,20 @@ fun AmiiboListScreen(
                                     onClick = {
                                         viewModel.setPageSize(size)
                                         showPageSizeDropdown = false
-                                    }
+                                    },
+                                    leadingIcon = if (size == pageSize) {
+                                        { Text("✓") }
+                                    } else null
                                 )
                             }
                         }
                     }
+
                     IconButton(onClick = { viewModel.refreshAmiibos() }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Refrescar")
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = stringResource(R.string.retry)
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -147,12 +196,11 @@ fun AmiiboListScreen(
             )
         }
     ) { paddingValues ->
-
         when (val state = uiState) {
             is AmiiboUiState.Loading -> {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
+                LoadingContent(
+                    modifier = Modifier.padding(paddingValues)
+                )
             }
 
             is AmiiboUiState.Success -> {
@@ -161,28 +209,49 @@ fun AmiiboListScreen(
                     onRefresh = { viewModel.refreshAmiibos() },
                     modifier = Modifier.padding(paddingValues)
                 ) {
-                    AmiiboGrid(
-                        amiibos = state.amiibos,
-                        onAmiiboClick = onAmiiboClick,
-                        hasMorePages = hasMorePages,
-                        isLoadingMore = isLoadingMore,
-                        paginationError = paginationError,
-                        onLoadMore = { viewModel.loadNextPage() },
-                        onRetryLoadMore = { viewModel.retryLoadMore() },
-                        modifier = Modifier.fillMaxSize()
-                    )
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        // PART 2: Search TextField
+                        SearchBar(
+                            query = searchQuery,
+                            onQueryChange = { viewModel.onSearchQueryChange(it) },
+                            onClearClick = { viewModel.clearSearch() }
+                        )
+
+                        AmiiboGrid(
+                            amiibos = state.amiibos,
+                            onAmiiboClick = onAmiiboClick,
+                            hasMorePages = hasMorePages && searchQuery.isBlank(),
+                            isLoadingMore = isLoadingMore,
+                            paginationError = paginationError,
+                            onLoadMore = { viewModel.loadNextPage() },
+                            onRetryLoadMore = { viewModel.retryLoadMore() },
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
                 }
             }
 
             is AmiiboUiState.Error -> {
-                if (!state.cachedData.isNullOrEmpty()) {
-                    PullToRefreshBox(
-                        isRefreshing = false,
-                        onRefresh = { viewModel.refreshAmiibos() },
-                        modifier = Modifier.padding(paddingValues)
-                    ) {
+                if (state.cachedAmiibos.isNotEmpty()) {
+                    // PART 1 DoD: Grid still visible — mostrar grid con cache + banner de error
+                    // El Snackbar se muestra via SharedFlow (ver LaunchedEffect arriba)
+                    Column(modifier = Modifier.padding(paddingValues)) {
+                        ErrorBanner(
+                            message = state.message,
+                            errorType = state.errorType,
+                            isRetryable = state.isRetryable,
+                            onRetry = { viewModel.refreshAmiibos() }
+                        )
+
+                        // PART 2: Search TextField también disponible en estado de error con cache
+                        SearchBar(
+                            query = searchQuery,
+                            onQueryChange = { viewModel.onSearchQueryChange(it) },
+                            onClearClick = { viewModel.clearSearch() }
+                        )
+
                         AmiiboGrid(
-                            amiibos = state.cachedData,
+                            amiibos = state.cachedAmiibos,
                             onAmiiboClick = onAmiiboClick,
                             hasMorePages = false,
                             isLoadingMore = false,
@@ -193,8 +262,11 @@ fun AmiiboListScreen(
                         )
                     }
                 } else {
+                    // PART 1 DoD: Full error only when empty
                     ErrorContent(
                         message = state.message,
+                        errorType = state.errorType,
+                        isRetryable = state.isRetryable,
                         onRetry = { viewModel.refreshAmiibos() },
                         modifier = Modifier.padding(paddingValues)
                     )
@@ -204,9 +276,93 @@ fun AmiiboListScreen(
     }
 }
 
+// =============================================================================
+// PART 2 - SEARCH BAR COMPOSABLE
+// =============================================================================
+/**
+ * Campo de búsqueda para filtrar Amiibos localmente.
+ *
+ * DoD: OutlinedTextField at top of screen
+ * DoD: Clear button — X icon to clear search text
+ *
+ * @param query Texto actual de búsqueda
+ * @param onQueryChange Callback cuando el usuario escribe
+ * @param onClearClick Callback cuando presiona el botón X
+ */
+@Composable
+private fun SearchBar(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    onClearClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    OutlinedTextField(
+        value = query,
+        onValueChange = onQueryChange,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        placeholder = {
+            Text(
+                text = "Buscar Amiibo...",
+                style = MaterialTheme.typography.bodyMedium
+            )
+        },
+        leadingIcon = {
+            Icon(
+                imageVector = Icons.Default.Search,
+                contentDescription = "Buscar",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        },
+        // DoD: Clear button — X icon to clear search text
+        trailingIcon = {
+            if (query.isNotEmpty()) {
+                IconButton(onClick = onClearClick) {
+                    Icon(
+                        imageVector = Icons.Default.Clear,
+                        contentDescription = "Limpiar búsqueda",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        },
+        singleLine = true,
+        shape = RoundedCornerShape(12.dp)
+    )
+}
+
+// =============================================================================
+// COMPONENTES DE UI REUTILIZABLES (sin cambios respecto al original)
+// =============================================================================
+
+@Composable
+private fun LoadingContent(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(48.dp)
+            )
+            Text(
+                text = stringResource(R.string.loading_amiibos),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
 @Composable
 private fun ErrorContent(
     message: String,
+    errorType: ErrorType,
+    isRetryable: Boolean,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -220,33 +376,84 @@ private fun ErrorContent(
             modifier = Modifier.padding(32.dp)
         ) {
             Icon(
-                imageVector = Icons.Default.CloudOff, // Icono genérico por defecto
+                imageVector = errorType.toIcon(),
                 contentDescription = null,
                 modifier = Modifier.size(64.dp),
                 tint = MaterialTheme.colorScheme.error
             )
+
             Text(
-                text = "Error de conexión",
+                text = stringResource(R.string.error_loading),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.error
             )
             Text(
                 text = message,
                 style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Button(onClick = onRetry) {
-                Text(text = "Reintentar")
+
+            if (isRetryable) {
+                Button(onClick = onRetry) {
+                    Text(text = stringResource(R.string.retry))
+                }
             }
         }
     }
 }
 
 private fun ErrorType.toIcon(): ImageVector = when (this) {
-    ErrorType.NETWORK -> Icons.Default.CloudOff   // Sin conexión
-    ErrorType.PARSE -> Icons.Default.Warning      // Error de datos
-    ErrorType.DATABASE -> Icons.Default.Storage   // Error de BD
-    ErrorType.UNKNOWN -> Icons.Default.Error      // Error genérico
+    ErrorType.NETWORK -> Icons.Default.CloudOff
+    ErrorType.PARSE -> Icons.Default.Warning
+    ErrorType.DATABASE -> Icons.Default.Storage
+    ErrorType.UNKNOWN -> Icons.Default.Error
+}
+
+@Composable
+private fun ErrorBanner(
+    message: String,
+    errorType: ErrorType,
+    isRetryable: Boolean,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                imageVector = errorType.toIcon(),
+                contentDescription = null,
+                modifier = Modifier.size(24.dp),
+                tint = MaterialTheme.colorScheme.onErrorContainer
+            )
+
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onErrorContainer,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+
+            if (isRetryable) {
+                Button(
+                    onClick = onRetry,
+                    modifier = Modifier.padding(top = 8.dp)
+                ) {
+                    Text(text = stringResource(R.string.retry))
+                }
+            }
+        }
+    }
 }
 
 @Composable
@@ -275,7 +482,7 @@ private fun AmiiboGrid(
                     totalItems > 0
         }
     }
- //--
+
     LaunchedEffect(shouldLoadMore) {
         if (shouldLoadMore) {
             onLoadMore()
@@ -308,9 +515,7 @@ private fun AmiiboGrid(
                         .padding(16.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(32.dp)
-                    )
+                    CircularProgressIndicator(modifier = Modifier.size(32.dp))
                 }
             }
         }
@@ -424,7 +629,6 @@ private fun AmiiboCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Imagen con fondo degradado
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
