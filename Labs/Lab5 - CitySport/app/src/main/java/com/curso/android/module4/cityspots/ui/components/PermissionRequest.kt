@@ -30,90 +30,28 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.MultiplePermissionsState
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 
-/**
- * =============================================================================
- * PermissionRequest - Componente para manejo de permisos en Runtime
- * =============================================================================
- *
- * CONCEPTO: Permisos en Runtime (Android 6.0+)
- * Desde Android 6.0 (API 23), los permisos "peligrosos" deben solicitarse
- * en tiempo de ejecución, no solo declararse en el Manifest.
- *
- * PERMISOS PELIGROSOS vs NORMALES:
- * - Normales: Se otorgan automáticamente (INTERNET, BLUETOOTH, etc.)
- * - Peligrosos: Requieren aprobación del usuario (CAMERA, LOCATION, etc.)
- *
- * FLUJO DE PERMISOS:
- * 1. Verificar si el permiso está otorgado
- * 2. Si no, verificar si debemos mostrar justificación (shouldShowRationale)
- * 3. Solicitar el permiso
- * 4. Manejar la respuesta (otorgado/denegado)
- *
- * CONCEPTO: Accompanist Permissions
- * Librería de Google que provee APIs declarativas para permisos en Compose:
- * - rememberPermissionState(): Para un solo permiso
- * - rememberMultiplePermissionsState(): Para múltiples permisos
- *
- * NOTA: @ExperimentalPermissionsApi indica que la API puede cambiar
- * en futuras versiones, pero es estable para uso en producción.
- *
- * =============================================================================
- */
-
-/**
- * Lista de permisos requeridos por la aplicación
- *
- * CAMERA: Para capturar fotos de los spots
- * ACCESS_FINE_LOCATION: Para ubicación precisa (GPS)
- * ACCESS_COARSE_LOCATION: Requerido junto con FINE_LOCATION
- */
 val requiredPermissions = listOf(
     Manifest.permission.CAMERA,
     Manifest.permission.ACCESS_FINE_LOCATION,
     Manifest.permission.ACCESS_COARSE_LOCATION
 )
 
-/**
- * Composable wrapper que maneja el flujo de permisos
- *
- * Este componente:
- * 1. Solicita permisos si no están otorgados
- * 2. Muestra UI apropiada según el estado de permisos
- * 3. Muestra el contenido cuando todos los permisos están otorgados
- *
- * @param content Contenido a mostrar cuando los permisos están otorgados
- */
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun RequirePermissions(
     content: @Composable () -> Unit
 ) {
-    // Crear estado para múltiples permisos
-    // Este estado se recuerda y actualiza automáticamente cuando cambian los permisos
     val permissionsState = rememberMultiplePermissionsState(
         permissions = requiredPermissions
     )
 
-    // Verificar si todos los permisos están otorgados
     if (permissionsState.allPermissionsGranted) {
-        // Permisos otorgados: mostrar contenido principal
         content()
     } else {
-        // Permisos pendientes: mostrar pantalla de solicitud
         PermissionRequestScreen(permissionsState = permissionsState)
     }
 }
 
-/**
- * Pantalla que solicita permisos al usuario
- *
- * Muestra:
- * - Explicación de por qué se necesitan los permisos
- * - Lista de permisos faltantes
- * - Botón para solicitar permisos o abrir configuración
- *
- * @param permissionsState Estado actual de los permisos
- */
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun PermissionRequestScreen(
@@ -128,7 +66,6 @@ fun PermissionRequestScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Icono según el contexto
         Icon(
             imageVector = if (permissionsState.shouldShowRationale) {
                 Icons.Default.Warning
@@ -142,7 +79,6 @@ fun PermissionRequestScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Título
         Text(
             text = "Permisos Requeridos",
             style = MaterialTheme.typography.headlineMedium,
@@ -151,19 +87,16 @@ fun PermissionRequestScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Descripción según el estado
         val description = if (permissionsState.shouldShowRationale) {
-            // El usuario ya denegó una vez, mostrar explicación más detallada
             "Has denegado los permisos anteriormente. " +
-                "City Spots necesita acceso a la cámara para capturar fotos " +
-                "y a la ubicación para guardar las coordenadas de tus spots."
+                    "City Spots necesita acceso a la cámara para capturar fotos " +
+                    "y a la ubicación para guardar las coordenadas de tus spots."
         } else {
-            // Primera vez solicitando
             "Para usar City Spots necesitamos acceso a tu cámara " +
-                "y ubicación. Esto nos permite:\n\n" +
-                "• Capturar fotos de los lugares que visites\n" +
-                "• Guardar las coordenadas GPS de cada spot\n" +
-                "• Mostrar tus spots en el mapa"
+                    "y ubicación. Esto nos permite:\n\n" +
+                    "• Capturar fotos de los lugares que visites\n" +
+                    "• Guardar las coordenadas GPS de cada spot\n" +
+                    "• Mostrar tus spots en el mapa"
         }
 
         Text(
@@ -175,19 +108,14 @@ fun PermissionRequestScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Mostrar permisos faltantes
         PermissionsList(permissionsState)
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Botón de acción
         if (permissionsState.shouldShowRationale) {
-            // Si el usuario ya denegó y no hay más intentos,
-            // ofrecer ir a configuración
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Button(
                     onClick = {
-                        // Intentar solicitar de nuevo
                         permissionsState.launchMultiplePermissionRequest()
                     }
                 ) {
@@ -198,7 +126,6 @@ fun PermissionRequestScreen(
 
                 OutlinedButton(
                     onClick = {
-                        // Abrir configuración de la app
                         val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
                             data = Uri.fromParts("package", context.packageName, null)
                         }
@@ -209,7 +136,6 @@ fun PermissionRequestScreen(
                 }
             }
         } else {
-            // Primera solicitud
             Button(
                 onClick = {
                     permissionsState.launchMultiplePermissionRequest()
@@ -221,11 +147,6 @@ fun PermissionRequestScreen(
     }
 }
 
-/**
- * Lista visual de permisos con su estado
- *
- * Muestra cada permiso faltante con un icono representativo
- */
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 private fun PermissionsList(permissionsState: MultiplePermissionsState) {

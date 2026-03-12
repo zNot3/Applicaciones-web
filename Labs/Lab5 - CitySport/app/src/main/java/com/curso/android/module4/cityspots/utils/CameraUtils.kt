@@ -13,6 +13,41 @@ import java.util.Locale
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
+// =============================================================================
+// PART 1: CaptureError - Tipos de error granulares para captura de foto
+// =============================================================================
+
+sealed class CaptureError : Exception() {
+
+    data object CameraClosed : CaptureError() {
+        override val message: String =
+            "La cámara se cerró inesperadamente. Vuelve a abrir la pantalla e intenta de nuevo."
+    }
+
+    data object CaptureFailed : CaptureError() {
+        override val message: String =
+            "Error de hardware al capturar la foto. Intenta de nuevo."
+    }
+
+    data class FileIOError(override val cause: Throwable) : CaptureError() {
+        override val message: String =
+            "No se pudo guardar la foto. Verifica que haya espacio disponible."
+    }
+
+    companion object {
+        fun from(exception: ImageCaptureException): CaptureError =
+            when (exception.imageCaptureError) {
+                ImageCapture.ERROR_CAMERA_CLOSED -> CameraClosed
+                ImageCapture.ERROR_FILE_IO       -> FileIOError(exception)
+                else                             -> CaptureFailed
+            }
+    }
+}
+
+// =============================================================================
+// CameraUtils
+// =============================================================================
+
 class CameraUtils(private val context: Context) {
 
     private val fileNameFormat = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US)
@@ -20,8 +55,7 @@ class CameraUtils(private val context: Context) {
     fun createImageFile(): File {
         val storageDir = context.filesDir
         val timeStamp = fileNameFormat.format(Date())
-        val fileName = "spot_$timeStamp.jpg"
-        return File(storageDir, fileName)
+        return File(storageDir, "spot_$timeStamp.jpg")
     }
 
     suspend fun capturePhoto(imageCapture: ImageCapture): Uri {
@@ -34,23 +68,12 @@ class CameraUtils(private val context: Context) {
                 ContextCompat.getMainExecutor(context),
                 object : ImageCapture.OnImageSavedCallback {
                     override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                        val savedUri = Uri.fromFile(photoFile)
-                        continuation.resume(savedUri)
+                        continuation.resume(Uri.fromFile(photoFile))
                     }
 
                     override fun onError(exception: ImageCaptureException) {
-                        val captureError = when (exception.imageCaptureError) {
-                            ImageCapture.ERROR_CAMERA_CLOSED ->
-                                CaptureError.CameraClosed
-                            ImageCapture.ERROR_CAPTURE_FAILED ->
-                                CaptureError.HardwareFailure(exception.imageCaptureError)
-                            ImageCapture.ERROR_FILE_IO ->
-                                CaptureError.FileIOError(exception)
-                            else ->
-                                CaptureError.HardwareFailure(exception.imageCaptureError)
-                        }
-                        if (photoFile.exists()) photoFile.delete()
-                        continuation.resumeWithException(CaptureException(captureError))
+                        photoFile.delete()
+                        continuation.resumeWithException(CaptureError.from(exception))
                     }
                 }
             )
@@ -63,8 +86,7 @@ class CameraUtils(private val context: Context) {
 
     fun deleteImage(uri: Uri): Boolean {
         return try {
-            val file = File(uri.path ?: return false)
-            file.delete()
+            File(uri.path ?: return false).delete()
         } catch (e: Exception) {
             false
         }
@@ -72,8 +94,7 @@ class CameraUtils(private val context: Context) {
 
     fun getImageSize(uri: Uri): Long {
         return try {
-            val file = File(uri.path ?: return -1)
-            file.length()
+            File(uri.path ?: return -1).length()
         } catch (e: Exception) {
             -1
         }
@@ -81,24 +102,9 @@ class CameraUtils(private val context: Context) {
 
     fun imageExists(uri: Uri): Boolean {
         return try {
-            val file = File(uri.path ?: return false)
-            file.exists()
+            File(uri.path ?: return false).exists()
         } catch (e: Exception) {
             false
         }
     }
 }
-
-sealed class CaptureError {
-    data object CameraClosed : CaptureError()
-    data class HardwareFailure(val code: Int) : CaptureError()
-    data class FileIOError(val cause: Throwable) : CaptureError()
-
-    fun toUserMessage(): String = when (this) {
-        is CameraClosed    -> "La cámara se cerró inesperadamente. Intenta de nuevo."
-        is HardwareFailure -> "Error de hardware en la cámara (código $code)."
-        is FileIOError     -> "No se pudo guardar la foto. Verifica el almacenamiento."
-    }
-}
-
-class CaptureException(val error: CaptureError) : Exception(error.toUserMessage())

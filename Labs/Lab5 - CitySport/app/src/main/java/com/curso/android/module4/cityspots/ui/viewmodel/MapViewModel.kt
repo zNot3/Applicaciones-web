@@ -5,7 +5,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.curso.android.module4.cityspots.data.entity.SpotEntity
 import com.curso.android.module4.cityspots.repository.CreateSpotResult
+import com.curso.android.module4.cityspots.repository.DeleteSpotResult
 import com.curso.android.module4.cityspots.repository.SpotRepository
+import com.curso.android.module4.cityspots.utils.CaptureError
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -14,39 +16,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-/**
- * =============================================================================
- * MapViewModel - ViewModel para la pantalla principal del mapa
- * =============================================================================
- *
- * CONCEPTO: ViewModel
- * El ViewModel es el componente de la arquitectura MVVM que:
- * 1. Sobrevive a cambios de configuración (rotación, etc.)
- * 2. Contiene la lógica de presentación
- * 3. Expone datos a la UI mediante StateFlow/LiveData
- * 4. No tiene referencia directa a Views/Composables
- *
- * CONCEPTO: ViewModel con DI (Koin)
- * Antes usábamos AndroidViewModel para acceder al Context y crear
- * el Repository internamente. Ahora con Koin:
- * - Usamos ViewModel puro (sin AndroidViewModel)
- * - El Repository se inyecta via constructor
- * - Koin se encarga de resolver las dependencias
- *
- * BENEFICIOS DE ESTE ENFOQUE:
- * 1. **Testabilidad**: Puedes inyectar un mock repository en tests
- * 2. **Desacoplamiento**: ViewModel no conoce cómo se crea el Repository
- * 3. **Pureza**: No hay dependencia de Application/Context
- *
- * CONCEPTO: StateFlow vs LiveData
- * - LiveData: Observable de Lifecycle (tradicional, requiere observers)
- * - StateFlow: Flow que siempre tiene un valor, mejor integración con Compose
- *   StateFlow es preferido en Compose por su naturaleza "composable"
- *
- * =============================================================================
- */
 class MapViewModel(
-    // Repository inyectado por Koin
     private val repository: SpotRepository
 ) : ViewModel() {
 
@@ -54,37 +24,15 @@ class MapViewModel(
     // ESTADO DE LA UI
     // =========================================================================
 
-    /**
-     * Estado de ubicación del usuario
-     *
-     * MutableStateFlow es la versión mutable (privada) que podemos actualizar
-     * StateFlow es la versión inmutable (pública) que exponemos a la UI
-     */
     private val _userLocation = MutableStateFlow<LatLng?>(null)
     val userLocation: StateFlow<LatLng?> = _userLocation.asStateFlow()
 
-    /**
-     * Estado de carga durante operaciones
-     */
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
-    /**
-     * Mensajes de error para mostrar al usuario
-     */
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
-    /**
-     * Lista de todos los spots
-     *
-     * CONCEPTO: stateIn
-     * Convierte un Flow en StateFlow, permitiendo:
-     * - SharingStarted.WhileSubscribed: El Flow se activa solo cuando hay collectors
-     * - 5000ms: Mantiene el Flow activo 5 segundos después del último collector
-     *   (evita recrear el Flow en rotaciones rápidas)
-     * - emptyList(): Valor inicial mientras el Flow carga
-     */
     val spots: StateFlow<List<SpotEntity>> = repository.getAllSpots()
         .stateIn(
             scope = viewModelScope,
@@ -92,25 +40,13 @@ class MapViewModel(
             initialValue = emptyList()
         )
 
-    /**
-     * Estado del resultado de captura
-     * true = captura exitosa, false = error, null = sin resultado pendiente
-     */
     private val _captureResult = MutableStateFlow<Boolean?>(null)
     val captureResult: StateFlow<Boolean?> = _captureResult.asStateFlow()
 
     // =========================================================================
-    // ACCIONES
+    // ACCIONES DE UBICACIÓN
     // =========================================================================
 
-    /**
-     * Carga la ubicación actual del usuario
-     *
-     * CONCEPTO: viewModelScope
-     * Es un CoroutineScope vinculado al ciclo de vida del ViewModel.
-     * Las coroutines lanzadas aquí se cancelan automáticamente cuando
-     * el ViewModel se destruye, evitando memory leaks.
-     */
     fun loadUserLocation() {
         viewModelScope.launch {
             try {
@@ -127,11 +63,6 @@ class MapViewModel(
         }
     }
 
-    /**
-     * Inicia escucha de actualizaciones de ubicación en tiempo real
-     *
-     * Útil para mostrar la posición del usuario moviéndose en el mapa
-     */
     fun startLocationUpdates() {
         viewModelScope.launch {
             repository.getLocationUpdates()
@@ -141,20 +72,10 @@ class MapViewModel(
         }
     }
 
-    /**
-     * Crea un nuevo Spot capturando foto y ubicación
-     *
-     * @param imageCapture Use case de CameraX configurado
-     *
-     * MANEJO DE RESULTADOS CON SEALED CLASS
-     * -------------------------------------
-     * El Repository retorna un CreateSpotResult que puede ser:
-     * - Success: Spot creado exitosamente
-     * - NoLocation: No se pudo obtener ubicación GPS
-     * - InvalidCoordinates: Las coordenadas GPS son inválidas
-     *
-     * Usar when con sealed class garantiza manejar todos los casos.
-     */
+    // =========================================================================
+    // CREAR SPOT
+    // =========================================================================
+
     fun createSpot(imageCapture: ImageCapture) {
         viewModelScope.launch {
             try {
@@ -166,7 +87,8 @@ class MapViewModel(
                     }
 
                     is CreateSpotResult.NoLocation -> {
-                        _errorMessage.value = "No se pudo obtener la ubicación. Verifica que el GPS esté activado."
+                        _errorMessage.value =
+                            "No se pudo obtener la ubicación. Verifica que el GPS esté activado."
                         _captureResult.value = false
                     }
 
@@ -174,12 +96,21 @@ class MapViewModel(
                         _errorMessage.value = result.message
                         _captureResult.value = false
                     }
+
                     is CreateSpotResult.PhotoCaptureFailed -> {
-                        _errorMessage.value = result.error.toUserMessage()
+                        _errorMessage.value = when (result.error) {
+                            is CaptureError.CameraClosed ->
+                                "La cámara se cerró inesperadamente. Vuelve a abrir la pantalla e intenta de nuevo."
+                            is CaptureError.CaptureFailed ->
+                                "Error de hardware al capturar la foto. Intenta de nuevo."
+                            is CaptureError.FileIOError ->
+                                "No se pudo guardar la foto. Verifica que haya espacio disponible en el dispositivo."
+                        }
+                        _captureResult.value = false
                     }
                 }
             } catch (e: Exception) {
-                _errorMessage.value = "Error al capturar: ${e.message}"
+                _errorMessage.value = "Error inesperado: ${e.message}"
                 _captureResult.value = false
             } finally {
                 _isLoading.value = false
@@ -187,36 +118,25 @@ class MapViewModel(
         }
     }
 
-    /**
-     * Limpia el resultado de captura después de procesarlo
-     */
-    fun clearCaptureResult() {
-        _captureResult.value = null
-    }
+    // =========================================================================
+    // Part 2: ELIMINAR SPOT
+    // =========================================================================
 
-    /**
-     * Limpia el mensaje de error después de mostrarlo
-     */
-    fun clearError() {
-        _errorMessage.value = null
-    }
-
-    private val _spotPendingDeletion = MutableStateFlow<SpotEntity?>(null)
-    val spotPendingDeletion: StateFlow<SpotEntity?> = _spotPendingDeletion.asStateFlow()
-
-    fun requestDeleteSpot(spot: SpotEntity) {
-        _spotPendingDeletion.value = spot
-    }
-
-    fun confirmDeleteSpot() {
-        val spot = _spotPendingDeletion.value ?: return
+    fun deleteSpot(id: Long) {
         viewModelScope.launch {
-            repository.deleteSpot(spot)
-            _spotPendingDeletion.value = null
+            when (repository.deleteSpot(id)) {
+                is DeleteSpotResult.Success  -> { }
+                is DeleteSpotResult.NotFound ->
+                    _errorMessage.value = "No se encontró el spot para eliminar."
+            }
         }
     }
 
-    fun cancelDeleteSpot() {
-        _spotPendingDeletion.value = null
-    }
+    // =========================================================================
+    // LIMPIEZA DE ESTADO
+    // =========================================================================
+
+    fun clearCaptureResult() { _captureResult.value = null }
+
+    fun clearError() { _errorMessage.value = null }
 }

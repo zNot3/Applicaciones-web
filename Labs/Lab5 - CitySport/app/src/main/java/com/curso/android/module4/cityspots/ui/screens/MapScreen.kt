@@ -10,12 +10,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -65,7 +67,6 @@ fun MapScreen(
     val userLocation by viewModel.userLocation.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
-    val spotPendingDeletion by viewModel.spotPendingDeletion.collectAsState() // NUEVO
 
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
@@ -119,7 +120,10 @@ fun MapScreen(
             }
         }
     ) { paddingValues ->
+
         var selectedSpot by remember { mutableStateOf<SpotEntity?>(null) }
+
+        var spotPendingDeletion by remember { mutableStateOf<SpotEntity?>(null) }
 
         Box(
             modifier = Modifier
@@ -131,13 +135,19 @@ fun MapScreen(
                 userLocation = userLocation,
                 cameraPositionState = cameraPositionState,
                 onSpotClick = { spot -> selectedSpot = spot },
-                onSpotLongClick = { spot -> viewModel.requestDeleteSpot(spot) }, // NUEVO
-                onMapClick = { selectedSpot = null }
+                onMapClick = { selectedSpot = null },
+                onSpotLongClick = { spot ->
+                    selectedSpot = null
+                    spotPendingDeletion = spot
+                }
             )
 
             selectedSpot?.let { spot ->
                 SpotInfoCard(
                     spot = spot,
+                    onDelete = {
+                        spotPendingDeletion = spot
+                    },
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .padding(16.dp)
@@ -151,22 +161,38 @@ fun MapScreen(
             }
         }
 
-        // NUEVO: Diálogo de confirmación de borrado
+        // =====================================================================
+        // Part 2: Diálogo de confirmación de eliminación
+        // =====================================================================
+
         spotPendingDeletion?.let { spot ->
             AlertDialog(
-                onDismissRequest = { viewModel.cancelDeleteSpot() },
-                title = { Text("Eliminar Spot") },
+                onDismissRequest = { spotPendingDeletion = null },
+                title = {
+                    Text(text = "Eliminar Spot")
+                },
                 text = {
-                    Text("¿Estás seguro que deseas eliminar \"${spot.title}\"? Esta acción no se puede deshacer.")
+                    Text(
+                        text = "¿Estás seguro de que quieres eliminar \"${spot.title}\"?\n\nEsta acción no se puede deshacer."
+                    )
                 },
                 confirmButton = {
-                    TextButton(onClick = { viewModel.confirmDeleteSpot() }) {
-                        Text("Eliminar", color = MaterialTheme.colorScheme.error)
+                    TextButton(
+                        onClick = {
+                            viewModel.deleteSpot(spot.id)
+                            spotPendingDeletion = null
+                            selectedSpot = null
+                        }
+                    ) {
+                        Text(
+                            text = "Eliminar",
+                            color = MaterialTheme.colorScheme.error
+                        )
                     }
                 },
                 dismissButton = {
-                    TextButton(onClick = { viewModel.cancelDeleteSpot() }) {
-                        Text("Cancelar")
+                    TextButton(onClick = { spotPendingDeletion = null }) {
+                        Text(text = "Cancelar")
                     }
                 }
             )
@@ -180,8 +206,8 @@ private fun SpotMap(
     userLocation: LatLng?,
     cameraPositionState: CameraPositionState,
     onSpotClick: (SpotEntity) -> Unit,
-    onSpotLongClick: (SpotEntity) -> Unit, // NUEVO
-    onMapClick: () -> Unit
+    onMapClick: () -> Unit,
+    onSpotLongClick: (SpotEntity) -> Unit
 ) {
     val mapProperties = remember {
         MapProperties(
@@ -214,11 +240,12 @@ private fun SpotMap(
             Marker(
                 state = markerState,
                 title = spot.title,
+                snippet = "Mantén presionado para eliminar",
                 onClick = {
                     onSpotClick(spot)
                     true
                 },
-                onInfoWindowLongClick = { // NUEVO
+                onInfoWindowLongClick = {
                     onSpotLongClick(spot)
                 }
             )
@@ -229,6 +256,7 @@ private fun SpotMap(
 @Composable
 private fun SpotInfoCard(
     spot: SpotEntity,
+    onDelete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -237,36 +265,46 @@ private fun SpotInfoCard(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 8.dp
-        )
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
         Column(
             modifier = Modifier.padding(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            SubcomposeAsyncImage(
-                model = spot.imageUri.toUri(),
-                contentDescription = spot.title,
-                modifier = Modifier
-                    .size(280.dp, 160.dp)
-                    .clip(RoundedCornerShape(12.dp)),
-                contentScale = ContentScale.Crop,
-                loading = {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(32.dp),
-                            strokeWidth = 2.dp
-                        )
-                    }
-                },
-                success = {
-                    SubcomposeAsyncImageContent()
+            Box {
+                SubcomposeAsyncImage(
+                    model = spot.imageUri.toUri(),
+                    contentDescription = spot.title,
+                    modifier = Modifier
+                        .size(280.dp, 160.dp)
+                        .clip(RoundedCornerShape(12.dp)),
+                    contentScale = ContentScale.Crop,
+                    loading = {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(32.dp),
+                                strokeWidth = 2.dp
+                            )
+                        }
+                    },
+                    success = { SubcomposeAsyncImageContent() }
+                )
+
+                IconButton(
+                    onClick = onDelete,
+                    modifier = Modifier.align(Alignment.TopEnd)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Eliminar spot",
+                        tint = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.size(22.dp)
+                    )
                 }
-            )
+            }
 
             Spacer(modifier = Modifier.height(12.dp))
 
