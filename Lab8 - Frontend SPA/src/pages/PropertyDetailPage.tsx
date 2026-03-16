@@ -1,13 +1,3 @@
-// =============================================================================
-// PÁGINA: DETALLE DE PROPIEDAD - Real Estate React
-// =============================================================================
-// Página que muestra información detallada de una propiedad.
-//
-// ## useParams()
-// Hook de React Router que extrae parámetros de la URL.
-// La ruta /property/:id define un parámetro dinámico 'id'.
-// =============================================================================
-
 import type React from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, MapPin, Bed, Bath, Square, Calendar, Tag } from 'lucide-react';

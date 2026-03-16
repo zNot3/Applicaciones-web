@@ -1,16 +1,3 @@
-// =============================================================================
-// PÁGINA: HOME - Real Estate React
-// =============================================================================
-// Página principal que muestra la lista de propiedades con filtros.
-//
-// ## Gestión de Estado en React 19
-// Usamos useState para el estado local de filtros y propiedades.
-// En aplicaciones más grandes, consideraríamos:
-// - Context API para estado compartido
-// - Zustand/Jotai para estado global simple
-// - TanStack Query para datos del servidor
-// =============================================================================
-
 import type React from 'react';
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
@@ -38,34 +25,14 @@ import {
  * Página principal con lista de propiedades y filtros.
  */
 export function HomePage(): React.ReactElement {
-  // =========================================================================
-  // ESTADO
-  // =========================================================================
-  // - properties: Lista de propiedades filtradas
-  // - filters: Criterios de búsqueda actuales
-  // =========================================================================
   const [properties, setProperties] = useState<Property[]>([]);
   const [filters, setFilters] = useState<PropertyFilters>({});
 
-  // =========================================================================
-  // CARGAR PROPIEDADES
-  // =========================================================================
-  // useCallback memoriza la función para evitar recrearla en cada render.
-  // Esto es importante cuando la función se pasa como dependencia de useEffect.
-  // =========================================================================
   const loadProperties = useCallback(() => {
     const filtered = filterProperties(filters);
     setProperties(filtered);
   }, [filters]);
 
-  // =========================================================================
-  // EFECTOS
-  // =========================================================================
-  // useEffect ejecuta código después del render.
-  // Aquí lo usamos para:
-  // 1. Inicializar datos de ejemplo si no hay datos
-  // 2. Cargar propiedades cuando cambian los filtros
-  // =========================================================================
   useEffect(() => {
     // Inicializar con datos de ejemplo si está vacío
     initializeWithSampleData();
@@ -77,10 +44,6 @@ export function HomePage(): React.ReactElement {
 
     return () => clearTimeout(timer);
   }, [loadProperties]);
-
-  // =========================================================================
-  // HANDLERS
-  // =========================================================================
 
   /**
    * Actualiza un filtro específico.

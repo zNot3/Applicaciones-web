@@ -1,4 +1,3 @@
-// src/context/CompareContext.tsx
 import { createContext, useContext, useState } from 'react';
 import type { Property } from '@/types/property';
 

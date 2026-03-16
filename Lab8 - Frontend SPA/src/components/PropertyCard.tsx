@@ -1,4 +1,3 @@
-// src/components/PropertyCard.tsx
 import type React from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, Bed, Bath, Square, Tag } from 'lucide-react';

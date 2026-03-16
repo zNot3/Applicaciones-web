@@ -10,7 +10,6 @@ import { formatPrice, formatArea } from '@/lib/utils';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-/** Devuelve los IDs de las propiedades con el mejor valor numérico */
 function getBestIds(
   properties: Property[],
   getValue: (p: Property) => number,
@@ -94,7 +93,6 @@ const METRICS: MetricConfig[] = [
 export function ComparePage(): React.ReactElement {
   const { compareList, removeFromCompare, clearCompare } = useCompare();
 
-  // Calculamos los bestIds por cada métrica una sola vez
   const resolvedBestIds = METRICS.map((m) =>
     m.bestIds ? m.bestIds(compareList) : []
   );

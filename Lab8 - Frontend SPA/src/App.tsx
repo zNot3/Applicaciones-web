@@ -1,4 +1,3 @@
-// src/App.tsx
 import type React from 'react';
 import { Routes, Route, Link } from 'react-router-dom';
 import { Toaster } from '@/components/ui/sonner';
@@ -9,10 +8,6 @@ import { PropertyDetailPage } from '@/pages/PropertyDetailPage';
 import { ComparePage } from '@/pages/ComparePage';
 import { CompareProvider, useCompare } from '@/context/CompareContext';
 
-/**
- * Banner flotante que aparece cuando hay propiedades en la lista de comparación.
- * Permite al usuario navegar a /compare desde cualquier página.
- */
 function CompareBanner(): React.ReactElement | null {
   const { compareList } = useCompare();
   if (compareList.length === 0) return null;
@@ -35,8 +30,6 @@ function CompareBanner(): React.ReactElement | null {
 
 function App(): React.ReactElement {
   return (
-    // CompareProvider envuelve toda la app para que el estado
-    // de comparación sea accesible desde cualquier componente
     <CompareProvider>
       <Toaster position="top-right" richColors closeButton />
 

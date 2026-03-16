@@ -1,65 +1,4 @@
-// =============================================================================
-// TIPOS DE DATOS Y VALIDACIÓN - Module 2: Real Estate React
-// =============================================================================
-//
-// ## Educational Note: La Doble Capa de Validación
-//
-// Este archivo demuestra un patrón fundamental del desarrollo moderno:
-// combinar validación en tiempo de compilación (TypeScript) con validación
-// en tiempo de ejecución (Zod).
-//
-// ### ¿Por qué necesitamos AMBAS validaciones?
-//
-// ```
-// ┌─────────────────────────────────────────────────────────────────────────┐
-// │              VALIDACIÓN: Compilación vs Ejecución                       │
-// ├─────────────────────────────────────────────────────────────────────────┤
-// │                                                                          │
-// │   TYPESCRIPT (Compilación)              ZOD (Ejecución)                  │
-// │   ─────────────────────────────────────────────────────────────────────  │
-// │                                                                          │
-// │   ✓ Errores al escribir código         ✓ Errores con datos reales       │
-// │   ✓ Autocompletado inteligente         ✓ Mensajes de error al usuario   │
-// │   ✓ Refactoring seguro                 ✓ Validación de formularios      │
-// │   ✓ Documentación integrada            ✓ Sanitización de datos          │
-// │                                                                          │
-// │   ✗ No existe en runtime               ✗ Overhead de rendimiento        │
-// │   ✗ No puede validar datos externos    ✗ Código adicional               │
-// │                                                                          │
-// └─────────────────────────────────────────────────────────────────────────┘
-// ```
-//
-// ### Ejemplo del problema que resolvemos:
-//
-// ```typescript
-// // TypeScript NO puede ayudar aquí - el dato viene del usuario
-// const userInput = JSON.parse(localStorage.getItem('property'));
-// // ¿userInput.price es number? ¿Está entre 0 y 100M? TypeScript no sabe.
-//
-// // Con Zod, validamos en runtime:
-// const result = createPropertySchema.safeParse(userInput);
-// if (result.success) {
-//   // Ahora TypeScript SABE que result.data tiene el tipo correcto
-// }
-// ```
-//
-// ### Patrón "as const" para Enums Type-Safe
-//
-// Usamos `as const` en lugar de `enum` de TypeScript porque:
-// 1. Los valores son strings literales (mejor para forms y localStorage)
-// 2. El array es iterable (podemos hacer .map() para renderizar opciones)
-// 3. El tipo se infiere automáticamente con `typeof ARRAY[number]`
-//
-// =============================================================================
-
 import { z } from 'zod';
-
-// =============================================================================
-// ENUMS Y CONSTANTES
-// =============================================================================
-// Definimos constantes para valores que se repiten.
-// Esto evita errores de tipeo y facilita el autocompletado.
-// =============================================================================
 
 /**
  * Tipos de operación inmobiliaria disponibles.
@@ -90,26 +29,6 @@ export const AMENITIES = [
 ] as const;
 export type Amenity = (typeof AMENITIES)[number];
 
-// =============================================================================
-// ESQUEMAS ZOD
-// =============================================================================
-// Zod nos permite definir esquemas de validación que generan tipos TypeScript.
-//
-// ## ¿Por qué Zod?
-// 1. Validación en runtime (datos de usuario, API responses)
-// 2. Mensajes de error personalizables
-// 3. Inferencia de tipos automática
-// 4. Integración perfecta con React Hook Form
-// =============================================================================
-
-/**
- * Esquema Zod para crear una nueva propiedad.
- *
- * ## Validaciones implementadas:
- * - Campos requeridos con mensajes en español
- * - Validación de rangos numéricos
- * - Validación de formato de URL para imágenes
- */
 export const createPropertySchema = z.object({
   // Información básica
   title: z
@@ -173,27 +92,8 @@ export const createPropertySchema = z.object({
     .default([]),
 });
 
-/**
- * Tipo inferido del esquema de creación.
- * Usamos z.infer para obtener el tipo TypeScript del esquema Zod.
- */
 export type CreatePropertyInput = z.infer<typeof createPropertySchema>;
 
-// =============================================================================
-// INTERFACE COMPLETA DE PROPIEDAD
-// =============================================================================
-// La interface Property incluye campos adicionales que se generan
-// automáticamente (id, fechas) y no son parte del formulario.
-// =============================================================================
-
-/**
- * Interface completa de una propiedad inmobiliaria.
- *
- * Incluye todos los campos de CreatePropertyInput más:
- * - id: Identificador único generado automáticamente
- * - createdAt: Fecha de creación
- * - updatedAt: Fecha de última actualización
- */
 export interface Property extends CreatePropertyInput {
   /** Identificador único de la propiedad */
   id: string;
@@ -204,10 +104,6 @@ export interface Property extends CreatePropertyInput {
   /** Fecha de última actualización (ISO string) */
   updatedAt: string;
 }
-
-// =============================================================================
-// TIPOS PARA FILTROS
-// =============================================================================
 
 /**
  * Filtros disponibles para la búsqueda de propiedades.
@@ -221,10 +117,6 @@ export interface PropertyFilters {
   minBedrooms?: number;
   city?: string;
 }
-
-// =============================================================================
-// UTILIDADES
-// =============================================================================
 
 /**
  * Etiquetas legibles para los tipos de propiedad.

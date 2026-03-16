@@ -1,17 +1,5 @@
-// =============================================================================
-// DATOS DE EJEMPLO - Module 2: Real Estate React
-// =============================================================================
-// Propiedades de ejemplo para desarrollo y demostración.
-// Estos datos se cargan en localStorage si está vacío.
-// =============================================================================
-
 import type { Property } from '@/types/property';
 
-/**
- * Propiedades inmobiliarias de ejemplo.
- * Cubren varios tipos de propiedades y operaciones para demostrar
- * todas las funcionalidades de la aplicación.
- */
 export const sampleProperties: Property[] = [
   {
     id: 'sample-1',

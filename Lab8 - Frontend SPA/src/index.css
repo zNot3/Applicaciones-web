@@ -1,26 +1,6 @@
-/* =============================================================================
- * ESTILOS GLOBALES - Module 2: Real Estate React
- * =============================================================================
- * Este archivo contiene:
- * 1. Import de Tailwind CSS v4
- * 2. Configuración de tema con @theme inline
- * 3. Variables CSS para Shadcn UI
- * 4. Estilos globales personalizados
- *
- * ## Tailwind CSS v4
- * En v4, la configuración se hace directamente en CSS usando @theme.
- * Los colores usan formato OKLCH para mejor representación de color.
- * ============================================================================= */
-
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
-/* =============================================================================
- * CONFIGURACIÓN DE TEMA - Tailwind v4
- * =============================================================================
- * @theme inline permite definir variables que Tailwind puede usar
- * directamente en las clases utilitarias (bg-primary, text-muted, etc.)
- * ============================================================================= */
 @theme {
   /* Colores semánticos para el tema */
   --color-background: hsl(var(--background));
@@ -65,12 +45,6 @@
   to { height: 0; }
 }
 
-/* =============================================================================
- * VARIABLES CSS - Compatibilidad con Shadcn UI
- * =============================================================================
- * Shadcn UI espera variables CSS en formato HSL sin el wrapper hsl().
- * Mantenemos estas variables para compatibilidad con los componentes.
- * ============================================================================= */
 :root {
   --background: 0 0% 100%;
   --foreground: 222.2 84% 4.9%;
@@ -117,9 +91,6 @@
   --ring: 224.3 76.3% 48%;
 }
 
-/* =============================================================================
- * ESTILOS BASE
- * ============================================================================= */
 @layer base {
   * {
     border-color: hsl(var(--border));
@@ -132,9 +103,6 @@
   }
 }
 
-/* =============================================================================
- * ESTILOS PERSONALIZADOS
- * ============================================================================= */
 @layer components {
   /* Tarjeta de propiedad */
   .property-card {

@@ -1,9 +1,3 @@
-// =============================================================================
-// PÁGINA: NUEVA PROPIEDAD - Real Estate React
-// =============================================================================
-// Página para crear una nueva propiedad inmobiliaria.
-// =============================================================================
-
 import type React from 'react';
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
@@ -14,26 +8,10 @@ import { PropertyForm } from '@/components/PropertyForm';
 import { createProperty } from '@/lib/storage';
 import type { CreatePropertyInput } from '@/types/property';
 
-/**
- * Página para crear una nueva propiedad.
- *
- * ## Navegación programática
- * Usamos useNavigate() para redirigir después de guardar.
- * Esto es preferible a usar <Link> cuando necesitamos
- * ejecutar lógica antes de navegar.
- */
 export function NewPropertyPage(): React.ReactElement {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  /**
-   * Maneja el envío del formulario.
-   *
-   * ## Flujo:
-   * 1. Marcar como "enviando" para deshabilitar el botón
-   * 2. Crear la propiedad en localStorage
-   * 3. Redirigir a la página principal
-   */
   const handleSubmit = (data: CreatePropertyInput): void => {
     setIsSubmitting(true);
 

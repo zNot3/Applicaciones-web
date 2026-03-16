@@ -1,4 +1,3 @@
-// src/components/CompareButton.tsx
 import type React from 'react';
 import { GitCompareArrows } from 'lucide-react';
 import { Button } from '@/components/ui/button';
