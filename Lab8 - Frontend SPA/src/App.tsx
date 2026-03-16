@@ -1,51 +1,54 @@
-// =============================================================================
-// APP COMPONENT - Module 2: Real Estate React
-// =============================================================================
-// Componente raíz de la aplicación que configura:
-// - Routing con React Router
-// - Layout general
-// - Providers globales (si los hubiera)
-//
-// ## React Router v7
-// React Router es el estándar para routing en aplicaciones React.
-// Usamos Routes y Route para definir las páginas de la aplicación.
-// =============================================================================
-
+// src/App.tsx
 import type React from 'react';
 import { Routes, Route, Link } from 'react-router-dom';
 import { Toaster } from '@/components/ui/sonner';
-import { Home, Building2 } from 'lucide-react';
+import { Home, Building2, GitCompareArrows } from 'lucide-react';
 import { HomePage } from '@/pages/HomePage';
 import { NewPropertyPage } from '@/pages/NewPropertyPage';
 import { PropertyDetailPage } from '@/pages/PropertyDetailPage';
+import { ComparePage } from '@/pages/ComparePage';
+import { CompareProvider, useCompare } from '@/context/CompareContext';
 
 /**
- * Componente principal de la aplicación.
- *
- * ## Estructura:
- * - Header con navegación
- * - Main con las rutas
- * - Footer con créditos
+ * Banner flotante que aparece cuando hay propiedades en la lista de comparación.
+ * Permite al usuario navegar a /compare desde cualquier página.
  */
+function CompareBanner(): React.ReactElement | null {
+  const { compareList } = useCompare();
+  if (compareList.length === 0) return null;
+
+  return (
+    <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 bg-primary text-primary-foreground px-6 py-3 rounded-full shadow-lg text-sm font-medium">
+      <GitCompareArrows className="h-4 w-4" />
+      <span>
+        {compareList.length} / 3 propiedades seleccionadas
+      </span>
+      <Link
+        to="/compare"
+        className="bg-primary-foreground text-primary px-3 py-1 rounded-full hover:opacity-90 transition-opacity font-semibold"
+      >
+        Comparar →
+      </Link>
+    </div>
+  );
+}
+
 function App(): React.ReactElement {
   return (
-    <>
-      {/* Toaster para notificaciones - fuera del layout para evitar problemas de z-index */}
+    // CompareProvider envuelve toda la app para que el estado
+    // de comparación sea accesible desde cualquier componente
+    <CompareProvider>
       <Toaster position="top-right" richColors closeButton />
 
       <div className="min-h-screen flex flex-col bg-background">
-        {/* ===================================================================
-          HEADER / NAVEGACIÓN
-          =================================================================== */}
+        {/* Header */}
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <div className="container mx-auto flex h-16 items-center px-4">
-            {/* Logo y nombre */}
             <Link to="/" className="flex items-center gap-2 font-bold text-xl">
               <Building2 className="h-6 w-6 text-primary" />
               <span>RealEstate</span>
             </Link>
 
-            {/* Navegación */}
             <nav className="ml-auto flex items-center gap-4">
               <Link
                 to="/"
@@ -54,38 +57,31 @@ function App(): React.ReactElement {
                 <Home className="h-4 w-4" />
                 Inicio
               </Link>
+
+              <Link
+                to="/compare"
+                className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <GitCompareArrows className="h-4 w-4" />
+                Comparar
+              </Link>
             </nav>
           </div>
         </header>
 
-        {/* ===================================================================
-          CONTENIDO PRINCIPAL
-          ===================================================================
-          Routes define las diferentes "páginas" de la aplicación.
-          Cada Route mapea una URL a un componente.
-          =================================================================== */}
         <main className="flex-1">
           <Routes>
-            {/* Página principal - Lista de propiedades */}
             <Route path="/" element={<HomePage />} />
-
-            {/* Página para crear nueva propiedad */}
             <Route path="/new" element={<NewPropertyPage />} />
-
-            {/* Página de detalle de propiedad */}
             <Route path="/property/:id" element={<PropertyDetailPage />} />
-
-            {/* Ruta 404 - Página no encontrada */}
+            <Route path="/compare" element={<ComparePage />} />
             <Route
               path="*"
               element={
                 <div className="container mx-auto px-4 py-16 text-center">
                   <h1 className="text-4xl font-bold mb-4">404</h1>
                   <p className="text-muted-foreground mb-6">Página no encontrada</p>
-                  <Link
-                    to="/"
-                    className="text-primary hover:underline"
-                  >
+                  <Link to="/" className="text-primary hover:underline">
                     Volver al inicio
                   </Link>
                 </div>
@@ -94,21 +90,17 @@ function App(): React.ReactElement {
           </Routes>
         </main>
 
-        {/* ===================================================================
-          FOOTER
-          =================================================================== */}
+        {/* Banner flotante de comparación */}
+        <CompareBanner />
+
         <footer className="border-t py-6 mt-auto">
           <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-            <p>
-              Portal Inmobiliario - Módulo 2 del Curso de Desarrollo Web
-            </p>
-            <p className="mt-1">
-              Desarrollado con React 19, Tailwind CSS y Shadcn UI
-            </p>
+            <p>Portal Inmobiliario - Módulo 2 del Curso de Desarrollo Web</p>
+            <p className="mt-1">Desarrollado con React 19, Tailwind CSS y Shadcn UI</p>
           </div>
         </footer>
       </div>
-    </>
+    </CompareProvider>
   );
 }
 
